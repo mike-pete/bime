@@ -7,7 +7,6 @@ function bimessage(target, model = {}) {
 	return {
 		get: getProperty.bind(null, context),
 		invoke: invokeMethod.bind(null, context),
-		logMessagesSent: () => console.log('sent', messagesSent),
 	}
 }
 
@@ -74,6 +73,7 @@ function handleResponse(context, e) {
 	}
 
 	if (error) {
+		messagesSent[id].state.error = error
 		messagesSent[id].reject(error)
 	} else {
 		messagesSent[id].resolve(data)

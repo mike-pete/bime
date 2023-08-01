@@ -37,13 +37,10 @@
 					const age = bi.get('age')
 					console.log('age', age)
 					console.log('get sent')
-					bi.logMessagesSent()
 					age.data.then((data) => {
 						console.log('age data returned')
 						console.log('age state', age)
 						console.log('age data', data)
-						bi.logMessagesSent()
-						bi.logMessagesSent()
 						console.log('age state', age)
 					})
 
