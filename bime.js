@@ -52,11 +52,9 @@ function sendResponse(context, id, data, error) {
 	target.postMessage(response, targetOrigin)
 }
 
-function handleMessage(context, e) {
+function handleMessage(context, event) {
 	const { targetOrigin, devmode } = context
-	const { origin, data } = e
-	
-	let requestType	
+	const { origin, data } = event
 
 	if (targetOrigin != '*' && origin !== targetOrigin) {
 		if (devmode) {
@@ -64,33 +62,37 @@ function handleMessage(context, e) {
 		}
 		return
 	}
-	
+
+	let messageData
+
 	try {
-		requestType = JSON.parse(data).requestType
+		messageData = JSON.parse(data)
 	} catch {
 		// ignore messages that aren't JSON, they're not relevant to bime
 		return
 	}
 
-	if (!requestType){
+	if (!messageData?.requestType) {
 		// ignore messages that don't have a requestType, they're not relevant to bime
 		return
 	}
 
-	if (requestType === 'response') {
-		handleResponse(context, e)
+	if (messageData.requestType === 'response') {
+		handleResponse(context, messageData)
 	} else {
-		handleRequest(context, e)
+		handleRequest(context, messageData)
 	}
 }
 
-function handleResponse(context, e) {
+function handleResponse(context, messageData) {
 	const { messagesSent, devmode } = context
-	const { id, data, error } = JSON.parse(e.data)
+	const { id, data, error } = messageData
 
 	if (!(id in messagesSent)) {
-		if (devmode){
-			warn(`Response received for unknown message. This response may be for another instance of bime.`)
+		if (devmode) {
+			warn(
+				`Response received for unknown message. This response may be for another instance of bime.`
+			)
 		}
 		return
 	}
@@ -110,9 +112,9 @@ function handleResponse(context, e) {
 	delete messagesSent[id]
 }
 
-async function handleRequest(context, e) {
+async function handleRequest(context, messageData) {
 	const { model } = context
-	const { requestType, property, args, id } = JSON.parse(e.data)
+	const { requestType, property, args, id } = messageData
 
 	if (!property) {
 		const label = requestType === 'function' ? 'function' : 'property'
