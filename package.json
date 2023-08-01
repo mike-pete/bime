@@ -1,0 +1,22 @@
+{
+  "name": "@mike.pete/bime",
+  "version": "1.0.0",
+  "description": "Bidirectional postmessages made easy",
+  "main": "bime.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kid-on-github/bime.git"
+  },
+  "keywords": [
+    "postmessage"
+  ],
+  "author": "Mike Peterson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kid-on-github/bime/issues"
+  },
+  "homepage": "https://github.com/kid-on-github/bime#readme"
+}
