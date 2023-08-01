@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<p>index</p>
+		<button id="message_button">Send Message</button>
+		<iframe src="./iframe.html" id="iframe"></iframe>
+		<script src="./bimessage.js" type="module"></script>
+		<script type="module">
+			import bimessage from './bimessage.js'
+
+			const model = {
+				greet: () => {
+					console.log('greetings from index')
+				},
+			}
+			const target = document.getElementById('iframe').contentWindow
+			const bi = bimessage(target, model)
+
+			document
+				.getElementById('message_button')
+				.addEventListener('click', () => {
+					bi.invoke('greet', ['Mike', 30, 'Andrew'])
+					bi.get('greet', ['Mike', 30, 'Andrew'])
+                    bi.invoke('age')
+                    bi.invoke('notReal')
+                    bi.get('notReal')
+                    bi.invoke('setName', ['Mike Peterson'])
+                    bi.invoke('logName')
+                    bi.get()
+                    bi.invoke()
+				})
+		</script>
+	</body>
+</html>

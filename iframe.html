@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<p>iframe</p>
+		<script src="./bimessage.js" type="module"></script>
+		<script type="module">
+			import bimessage from './bimessage.js'
+
+			const greetFunction = (name = '', age, friend) => {
+				if (name) {
+					console.log(`Hello ${name}!`)
+				} else {
+					console.log('Hello!')
+				}
+				console.log(`other info: ${age} ${friend}`)
+			}
+
+
+            const data = {
+                name: 'Mike',
+                age: 24,
+            }
+
+			const model = {
+				greet: greetFunction,
+				age: data.age,
+                logName: () => console.log(data.name),
+                setName: (name) => {
+                    data.name = name
+                },
+			}
+
+			const target = window.parent
+			const bi = bimessage(target, model)
+		</script>
+	</body>
+</html>
