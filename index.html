@@ -9,14 +9,14 @@
 		<p>index</p>
 		<button id="message_button">Send Message</button>
 		<iframe src="./iframe.html" id="iframe"></iframe>
-		<script src="./bimessage.js" type="module"></script>
 		<script type="module">
-			import bimessage from './bimessage.js'
+			import bimessage from './bime.js'
 
 			const model = {
 				greet: () => {
 					console.log('greetings from index')
 				},
+				pong: () => console.log('index: pong'),
 			}
 			const target = document.getElementById('iframe').contentWindow
 			const bi = bimessage(target, model)
@@ -24,15 +24,30 @@
 			document
 				.getElementById('message_button')
 				.addEventListener('click', () => {
-					bi.invoke('greet', ['Mike', 30, 'Andrew'])
-					bi.get('greet', ['Mike', 30, 'Andrew'])
-                    bi.invoke('age')
-                    bi.invoke('notReal')
-                    bi.get('notReal')
-                    bi.invoke('setName', ['Mike Peterson'])
-                    bi.invoke('logName')
-                    bi.get()
-                    bi.invoke()
+					// bi.invoke('greet', ['Mike', 30, 'Andrew'])
+					// bi.get('greet', ['Mike', 30, 'Andrew'])
+					// bi.invoke('age')
+					// bi.invoke('notReal')
+					// bi.get('notReal')
+					// bi.invoke('setName', ['Mike Peterson'])
+					// bi.invoke('logName')
+					// bi.get()
+					// bi.invoke()
+
+					const age = bi.get('age')
+					console.log('age', age)
+					console.log('get sent')
+					bi.logMessagesSent()
+					age.data.then((data) => {
+						console.log('age data returned')
+						console.log('age state', age)
+						console.log('age data', data)
+						bi.logMessagesSent()
+						bi.logMessagesSent()
+						console.log('age state', age)
+					})
+
+					// bi.invoke('ping')
 				})
 		</script>
 	</body>

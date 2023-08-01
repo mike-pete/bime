@@ -1,9 +1,6 @@
-- [] Add Promise return and resolve
 - [] Handshake
-- [] Add way to update model
+- [] Security
 - [] TS
 - [] Type safety on models (if possible which it probably isn't)
-- [] Add timeouts to requests
-- [] Add auto retry to requests
-- [] Add status' to requests (loading, error, data) // need loading in case data returns undefined
 - [] More detailed error handling
+- [] Docs

@@ -7,9 +7,8 @@
 	</head>
 	<body>
 		<p>iframe</p>
-		<script src="./bimessage.js" type="module"></script>
 		<script type="module">
-			import bimessage from './bimessage.js'
+			import bimessage from './bime.js'
 
 			const greetFunction = (name = '', age, friend) => {
 				if (name) {
@@ -19,7 +18,6 @@
 				}
 				console.log(`other info: ${age} ${friend}`)
 			}
-
 
             const data = {
                 name: 'Mike',
@@ -33,6 +31,10 @@
                 setName: (name) => {
                     data.name = name
                 },
+                ping: () => {
+                    console.log('iframe: ping')
+                    bi.invoke('pong')
+                }
 			}
 
 			const target = window.parent
