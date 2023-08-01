@@ -1,6 +1,6 @@
-function bimessage(target, model = {}) {
+function bime(target, model = {}, targetOrigin, devmode = false) {
 	const messagesSent = {}
-	const context = { target, model, messagesSent }
+	const context = { target, model, messagesSent, targetOrigin, devmode }
 
 	window.addEventListener('message', handleMessage.bind(null, context), false)
 
@@ -22,11 +22,11 @@ function invokeMethod(context, property, args) {
 function sendRequest(context, requestType, property, args = []) {
 	const id = createUUID()
 	const data = JSON.stringify({ id, requestType, property, args })
-	const { target, messagesSent } = context
+	const { target, messagesSent, targetOrigin } = context
 
 	let resolve, reject
 
-	let state = {
+	const state = {
 		loading: true,
 		data: new Promise((res, rej) => {
 			resolve = res
@@ -41,21 +41,41 @@ function sendRequest(context, requestType, property, args = []) {
 		reject,
 	}
 
-	target.postMessage(data)
+	target.postMessage(data, targetOrigin)
 
 	return state
 }
 
 function sendResponse(context, id, data, error) {
-	const { target } = context
+	const { target, targetOrigin } = context
 	const response = JSON.stringify({ id, requestType: 'response', data, error })
-	target.postMessage(response)
+	target.postMessage(response, targetOrigin)
 }
 
 function handleMessage(context, e) {
-	//TODO: security checks for origin and such
+	const { targetOrigin, devmode } = context
+	const { origin, data } = e
+	
+	let requestType	
 
-	const { requestType } = JSON.parse(e.data)
+	if (targetOrigin != '*' && origin !== targetOrigin) {
+		if (devmode) {
+			warn(`Message received from unknown origin [ ${origin} ].`)
+		}
+		return
+	}
+	
+	try {
+		requestType = JSON.parse(data).requestType
+	} catch {
+		// ignore messages that aren't JSON, they're not relevant to bime
+		return
+	}
+
+	if (!requestType){
+		// ignore messages that don't have a requestType, they're not relevant to bime
+		return
+	}
 
 	if (requestType === 'response') {
 		handleResponse(context, e)
@@ -65,11 +85,14 @@ function handleMessage(context, e) {
 }
 
 function handleResponse(context, e) {
-	const { messagesSent } = context
+	const { messagesSent, devmode } = context
 	const { id, data, error } = JSON.parse(e.data)
 
 	if (!(id in messagesSent)) {
-		throwError(`Response received for unknown message id: ${id}`)
+		if (devmode){
+			warn(`Response received for unknown message. This response may be for another instance of bime.`)
+		}
+		return
 	}
 
 	if (error) {
@@ -82,7 +105,7 @@ function handleResponse(context, e) {
 	messagesSent[id].state.loading = false
 	messagesSent[id].state.error = error
 
-	// it should be safe to remove the message from the messagesSent store 
+	// it should be safe to remove the message from the messagesSent store
 	// because the application should be maintaining a reference to the state object
 	delete messagesSent[id]
 }
@@ -97,9 +120,10 @@ async function handleRequest(context, e) {
 	}
 
 	if (!(property in model)) {
-		throwError(`[ ${property} ] does not exist in the model.`)
+		throwError(`[ ${property} ] does not exist in the target's model.`)
 	}
 
+	// TODO: simplify this
 	switch (requestType) {
 		case 'property':
 			if (typeof model[property] === 'function') {
@@ -133,7 +157,12 @@ function createUUID() {
 }
 
 function throwError(message) {
-	throw new Error(`bimessage: ${message}`)
+	throw new Error(`bime: ${message}`)
+}
+throwError.prototype = Error.prototype
+
+function warn(message) {
+	console.warn(`bime: ${message}`)
 }
 
-export default bimessage
+export default bime

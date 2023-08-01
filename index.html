@@ -10,7 +10,7 @@
 		<button id="message_button">Send Message</button>
 		<iframe src="./iframe.html" id="iframe"></iframe>
 		<script type="module">
-			import bimessage from './bime.js'
+			import bime from './bime.js'
 
 			const model = {
 				greet: () => {
@@ -19,7 +19,7 @@
 				pong: () => console.log('index: pong'),
 			}
 			const target = document.getElementById('iframe').contentWindow
-			const bi = bimessage(target, model)
+			const bi = bime(target, model, "http://127.0.0.1:5500")
 
 			document
 				.getElementById('message_button')
@@ -43,7 +43,8 @@
 					// 	console.log('age data', data)
 					// 	console.log('age state', age)
 					// })
-
+                    
+                    // bi.get('ping')
 					bi.invoke('ping')
 				})
 		</script>

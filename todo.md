@@ -1,7 +1,4 @@
 - [] Handshake
-- [] Security
 - [] TS
 - [] Type safety on models (if possible which it probably isn't)
-- [] More detailed error handling
 - [] Docs
-- [] Publish library
