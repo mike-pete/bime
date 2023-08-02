@@ -2,9 +2,9 @@
 	"name": "@mike.pete/bime",
 	"version": "1.0.0",
 	"description": "Bidirectional postmessages made easy",
-	"main": "bime.js",
+	"main": "./dist/bime.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"dev": "tsc --watch"
 	},
 	"repository": {
 		"type": "git",
@@ -17,12 +17,17 @@
 		"iframe",
 		"bidirectional",
 		"two-way",
-		"two way"
+		"two way",
+		"window"
 	],
 	"author": "Mike Peterson",
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/kid-on-github/bime/issues"
+		"url": "https://github.com/mike-pete/bime/issues"
 	},
-	"homepage": "https://github.com/kid-on-github/bime#readme"
+	"homepage": "https://github.com/mike-pete/bime#readme",
+	"devDependencies": {
+		"ts-node": "^10.9.1",
+		"typescript": "^5.1.6"
+	}
 }

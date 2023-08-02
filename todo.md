@@ -1,4 +1,6 @@
-- [] Handshake
 - [] TS
 - [] Type safety on models (if possible which it probably isn't)
+- [] Handshake
+- [] Better errors around improper usage?
 - [] Docs
+- [] License

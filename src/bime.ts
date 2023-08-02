@@ -1,6 +1,53 @@
-function bime(target, model = {}, targetOrigin, devmode = false) {
+type Context = {
+	target: Window
+	model: Record<string, any>
+	messagesSent: Record<string, MessageSentRecord>
+	targetOrigin: string
+	devMode: boolean
+}
+
+type State = {
+	loading: boolean
+	data: Promise<any>
+	error?: any
+}
+
+type MessageSentRecord = {
+	state: State
+	resolve: (value: any) => void
+	reject: (reason?: any) => void
+}
+
+enum RequestType {
+	function = 'function',
+	property = 'property',
+	response = 'response',
+}
+
+type MessageData = {
+	id: string
+	data: any
+	error: string
+	requestType: RequestType, 
+	property: string, 
+	args: any
+}
+
+// TODO: change model any
+function bime(
+	target: Window,
+	model: Record<string, any> = {},
+	targetOrigin: string,
+	devMode = false
+) {
 	const messagesSent = {}
-	const context = { target, model, messagesSent, targetOrigin, devmode }
+	const context: Context = {
+		target,
+		model,
+		messagesSent,
+		targetOrigin,
+		devMode,
+	}
 
 	window.addEventListener('message', handleMessage.bind(null, context), false)
 
@@ -10,28 +57,31 @@ function bime(target, model = {}, targetOrigin, devmode = false) {
 	}
 }
 
-function getProperty(context, property) {
-	return sendRequest(context, 'property', property)
+function getProperty(context: Context, property: string) {
+	return sendRequest(context, RequestType.property, property)
 }
 
-function invokeMethod(context, property, args) {
-	return sendRequest(context, 'function', property, args)
+// TODO: change any
+function invokeMethod(context: Context, property: string, args: any[]) {
+	return sendRequest(context, RequestType.function, property, args)
 }
 
-// requestType can be function, property, or response
-function sendRequest(context, requestType, property, args = []) {
-	const id = createUUID()
-	const data = JSON.stringify({ id, requestType, property, args })
-	const { target, messagesSent, targetOrigin } = context
+// TODO: change any
 
-	let resolve, reject
+function storeMessageState(context: Context, id: string) {
+	const { messagesSent } = context
 
-	const state = {
+	let resolve!: (value: unknown) => void
+	let reject!: (reason?: any) => void
+
+	const data = new Promise((res, rej) => {
+		resolve = res
+		reject = rej
+	})
+
+	const state: State = {
 		loading: true,
-		data: new Promise((res, rej) => {
-			resolve = res
-			reject = rej
-		}),
+		data,
 		error: undefined,
 	}
 
@@ -41,23 +91,43 @@ function sendRequest(context, requestType, property, args = []) {
 		reject,
 	}
 
+	return state
+}
+
+function sendRequest(
+	context: Context,
+	requestType: RequestType,
+	property: string,
+	args: any[] = []
+) {
+	const id = createUUID()
+	const data = JSON.stringify({ id, requestType, property, args })
+	const { target, targetOrigin } = context
+
+	const state = storeMessageState(context, id)
+
 	target.postMessage(data, targetOrigin)
 
 	return state
 }
 
-function sendResponse(context, id, data, error) {
+function sendResponse(context: Context, id: string, data: any, error?: string) {
 	const { target, targetOrigin } = context
-	const response = JSON.stringify({ id, requestType: 'response', data, error })
+	const response = JSON.stringify({
+		id,
+		requestType: RequestType.response,
+		data,
+		error,
+	})
 	target.postMessage(response, targetOrigin)
 }
 
-function handleMessage(context, event) {
-	const { targetOrigin, devmode } = context
+function handleMessage(context: Context, event: MessageEvent) {
+	const { targetOrigin, devMode } = context
 	const { origin, data } = event
 
 	if (targetOrigin != '*' && origin !== targetOrigin) {
-		if (devmode) {
+		if (devMode) {
 			warn(`Message received from unknown origin [ ${origin} ].`)
 		}
 		return
@@ -77,19 +147,19 @@ function handleMessage(context, event) {
 		return
 	}
 
-	if (messageData.requestType === 'response') {
+	if (messageData.requestType === RequestType.response) {
 		handleResponse(context, messageData)
 	} else {
 		handleRequest(context, messageData)
 	}
 }
 
-function handleResponse(context, messageData) {
-	const { messagesSent, devmode } = context
+function handleResponse(context: Context, messageData: MessageData) {
+	const { messagesSent, devMode } = context
 	const { id, data, error } = messageData
 
 	if (!(id in messagesSent)) {
-		if (devmode) {
+		if (devMode) {
 			warn(
 				`Response received for unknown message. This response may be for another instance of bime.`
 			)
@@ -112,12 +182,12 @@ function handleResponse(context, messageData) {
 	delete messagesSent[id]
 }
 
-async function handleRequest(context, messageData) {
+async function handleRequest(context: Context, messageData: MessageData) {
 	const { model } = context
 	const { requestType, property, args, id } = messageData
 
 	if (!property) {
-		const label = requestType === 'function' ? 'function' : 'property'
+		const label = requestType === RequestType.function ? 'function' : 'property'
 		throwError(`The ${label} name is required, but was not provided.`)
 	}
 
@@ -127,14 +197,14 @@ async function handleRequest(context, messageData) {
 
 	// TODO: simplify this
 	switch (requestType) {
-		case 'property':
+		case RequestType.property:
 			if (typeof model[property] === 'function') {
 				throwError(
 					`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`
 				)
 			}
 			break
-		case 'function':
+		case RequestType.function:
 			if (typeof model[property] !== 'function') {
 				throwError(
 					`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`
@@ -151,19 +221,22 @@ async function handleRequest(context, messageData) {
 		response = await model[property](...args)
 	}
 
-	sendResponse(context, id, response)
+	// TODO
+	let error
+	
+	sendResponse(context, id, response, error)
 }
 
 function createUUID() {
 	return self.crypto.randomUUID()
 }
 
-function throwError(message) {
+function throwError(message: string) {
 	throw new Error(`bime: ${message}`)
 }
 throwError.prototype = Error.prototype
 
-function warn(message) {
+function warn(message: string) {
 	console.warn(`bime: ${message}`)
 }
 
