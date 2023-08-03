@@ -28,8 +28,8 @@ type MessageData = {
 	id: string
 	data: any
 	error: string
-	requestType: RequestType, 
-	property: string, 
+	requestType: RequestType
+	property: string
 	args: any
 }
 
@@ -223,7 +223,7 @@ async function handleRequest(context: Context, messageData: MessageData) {
 
 	// TODO
 	let error
-	
+
 	sendResponse(context, id, response, error)
 }
 

@@ -17,3 +17,4 @@ Install bime with npm: `npm i @mike.pete/bime`
 ## Considerations
 
 - All responses need to be JSON serializable
+- Using bime to talk to a page that contains its self in an iframe will result in unexpected errors and behavior
