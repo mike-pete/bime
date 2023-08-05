@@ -1,6 +1,7 @@
 - [] TS
-- [] Type safety on models (if possible which it probably isn't)
 - [] Handshake
+- [] expose a listener killer/cleanup function
+- [] tests
 - [] Better errors around improper usage?
 - [] Docs
 - [] License
