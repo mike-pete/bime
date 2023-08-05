@@ -9,13 +9,13 @@ type Context = {
 type State = {
 	loading: boolean
 	data: Promise<any>
-	error?: any
+	error?: string
 }
 
 type MessageSentRecord = {
 	state: State
-	resolve: (value: any) => void
-	reject: (reason?: any) => void
+	resolve?: (value: any) => void
+	reject?: (reason?: any) => void
 }
 
 enum RequestType {
@@ -40,7 +40,7 @@ function bime(
 	targetOrigin: string,
 	devMode = false
 ) {
-	const messagesSent = {}
+	const messagesSent: Record<string, MessageSentRecord> = {}
 	const context: Context = {
 		target,
 		model,
@@ -71,12 +71,9 @@ function invokeMethod(context: Context, property: string, args: any[]) {
 function storeMessageState(context: Context, id: string) {
 	const { messagesSent } = context
 
-	let resolve!: (value: unknown) => void
-	let reject!: (reason?: any) => void
-
-	const data = new Promise((res, rej) => {
-		resolve = res
-		reject = rej
+	const data = new Promise((resolve, reject) => {
+		messagesSent[id].resolve = resolve
+		messagesSent[id].reject = reject
 	})
 
 	const state: State = {
@@ -85,11 +82,7 @@ function storeMessageState(context: Context, id: string) {
 		error: undefined,
 	}
 
-	messagesSent[id] = {
-		state,
-		resolve,
-		reject,
-	}
+	messagesSent[id] = { state }
 
 	return state
 }
@@ -128,7 +121,7 @@ function handleMessage(context: Context, event: MessageEvent) {
 
 	if (targetOrigin != '*' && origin !== targetOrigin) {
 		if (devMode) {
-			warn(`Message received from unknown origin [ ${origin} ].`)
+			bimeLogWarning(`Message received from unknown origin [ ${origin} ].`)
 		}
 		return
 	}
@@ -157,21 +150,33 @@ function handleMessage(context: Context, event: MessageEvent) {
 function handleResponse(context: Context, messageData: MessageData) {
 	const { messagesSent, devMode } = context
 	const { id, data, error } = messageData
+	const { reject, resolve } = messagesSent[id]
 
 	if (!(id in messagesSent)) {
-		if (devMode) {
-			warn(
+		devMode &&
+			bimeLogWarning(
 				`Response received for unknown message. This response may be for another instance of bime.`
 			)
-		}
 		return
 	}
 
 	if (error) {
 		messagesSent[id].state.error = error
-		messagesSent[id].reject(error)
+		if (reject && typeof reject === 'function') {
+			reject(error)
+		} else {
+			devMode &&
+				bimeLogError(`attempted to reject promise but reject was [${reject}]`)
+		}
 	} else {
-		messagesSent[id].resolve(data)
+		if (resolve && typeof resolve === 'function') {
+			resolve(data)
+		} else {
+			devMode &&
+				bimeLogError(
+					`attempted to resolve promise but resolve was [${resolve}]`
+				)
+		}
 	}
 
 	messagesSent[id].state.loading = false
@@ -188,25 +193,25 @@ async function handleRequest(context: Context, messageData: MessageData) {
 
 	if (!property) {
 		const label = requestType === RequestType.function ? 'function' : 'property'
-		throwError(`The ${label} name is required, but was not provided.`)
+		bimeThrowError(`The ${label} name is required, but was not provided.`)
 	}
 
 	if (!(property in model)) {
-		throwError(`[ ${property} ] does not exist in the target's model.`)
+		bimeThrowError(`[ ${property} ] does not exist in the target's model.`)
 	}
 
 	// TODO: simplify this
 	switch (requestType) {
 		case RequestType.property:
 			if (typeof model[property] === 'function') {
-				throwError(
+				bimeThrowError(
 					`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`
 				)
 			}
 			break
 		case RequestType.function:
 			if (typeof model[property] !== 'function') {
-				throwError(
+				bimeThrowError(
 					`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`
 				)
 			}
@@ -231,13 +236,16 @@ function createUUID() {
 	return self.crypto.randomUUID()
 }
 
-function throwError(message: string) {
+function bimeThrowError(message: string) {
 	throw new Error(`bime: ${message}`)
 }
-throwError.prototype = Error.prototype
+bimeThrowError.prototype = Error.prototype
 
-function warn(message: string) {
+function bimeLogWarning(message: string) {
 	console.warn(`bime: ${message}`)
 }
 
+function bimeLogError(message: string) {
+	console.error(`BIME LEVEL ERROR: ${message}`)
+}
 export default bime
