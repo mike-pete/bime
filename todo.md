@@ -1,7 +1,10 @@
-- [] TS
+- [] TS (remove any)
+- [] .d.ts
+- [] TS generic typing for remote model
 - [] Handshake
 - [] expose a listener killer/cleanup function
 - [] tests
+- [] eslint
 - [] Better errors around improper usage?
 - [] Docs
 - [] License
