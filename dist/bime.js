@@ -1,4 +1,21 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol */
+
+
+function __awaiter(thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,55 +23,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
+}
+
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
+
 var RequestType;
 (function (RequestType) {
     RequestType["function"] = "function";
     RequestType["property"] = "property";
     RequestType["response"] = "response";
 })(RequestType || (RequestType = {}));
-// TODO: change model any
-function bime(target, model = {}, targetOrigin, devMode = false) {
-    const messagesSent = {};
-    const context = {
-        target,
-        model,
-        messagesSent,
-        targetOrigin,
-        devMode,
-    };
-    window.addEventListener('message', handleMessage.bind(null, context), false);
-    return {
-        get: getProperty.bind(null, context),
-        invoke: invokeMethod.bind(null, context),
-    };
+
+function createUUID() {
+    return self.crypto.randomUUID();
 }
-function getProperty(context, property) {
-    return sendRequest(context, RequestType.property, property);
+function bimeThrowError(message) {
+    throw new Error(`bime: ${message}`);
 }
-// TODO: change any
-function invokeMethod(context, property, args) {
-    return sendRequest(context, RequestType.function, property, args);
+bimeThrowError.prototype = Error.prototype;
+function bimeLogWarning(message) {
+    console.warn(`bime: ${message}`);
 }
-// TODO: change any
+function bimeLogError(message) {
+    console.error(`BIME LEVEL ERROR: ${message}`);
+}
+
 function storeMessageState(context, id) {
     const { messagesSent } = context;
-    let resolve;
-    let reject;
-    const data = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
+    const data = new Promise((resolve, reject) => {
+        messagesSent[id].resolve = resolve;
+        messagesSent[id].reject = reject;
     });
     const state = {
         loading: true,
         data,
         error: undefined,
     };
-    messagesSent[id] = {
-        state,
-        resolve,
-        reject,
-    };
+    messagesSent[id] = { state };
     return state;
 }
 function sendRequest(context, requestType, property, args = []) {
@@ -75,12 +83,13 @@ function sendResponse(context, id, data, error) {
     });
     target.postMessage(response, targetOrigin);
 }
+
 function handleMessage(context, event) {
     const { targetOrigin, devMode } = context;
     const { origin, data } = event;
     if (targetOrigin != '*' && origin !== targetOrigin) {
         if (devMode) {
-            warn(`Message received from unknown origin [ ${origin} ].`);
+            bimeLogWarning(`Message received from unknown origin [ ${origin} ].`);
         }
         return;
     }
@@ -106,18 +115,30 @@ function handleMessage(context, event) {
 function handleResponse(context, messageData) {
     const { messagesSent, devMode } = context;
     const { id, data, error } = messageData;
+    const { reject, resolve } = messagesSent[id];
     if (!(id in messagesSent)) {
-        if (devMode) {
-            warn(`Response received for unknown message. This response may be for another instance of bime.`);
-        }
+        devMode &&
+            bimeLogWarning(`Response received for unknown message. This response may be for another instance of bime.`);
         return;
     }
     if (error) {
         messagesSent[id].state.error = error;
-        messagesSent[id].reject(error);
+        if (reject && typeof reject === 'function') {
+            reject(error);
+        }
+        else {
+            devMode &&
+                bimeLogError(`attempted to reject promise but reject was [${reject}]`);
+        }
     }
     else {
-        messagesSent[id].resolve(data);
+        if (resolve && typeof resolve === 'function') {
+            resolve(data);
+        }
+        else {
+            devMode &&
+                bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`);
+        }
     }
     messagesSent[id].state.loading = false;
     messagesSent[id].state.error = error;
@@ -131,21 +152,21 @@ function handleRequest(context, messageData) {
         const { requestType, property, args, id } = messageData;
         if (!property) {
             const label = requestType === RequestType.function ? 'function' : 'property';
-            throwError(`The ${label} name is required, but was not provided.`);
+            bimeThrowError(`The ${label} name is required, but was not provided.`);
         }
         if (!(property in model)) {
-            throwError(`[ ${property} ] does not exist in the target's model.`);
+            bimeThrowError(`[ ${property} ] does not exist in the target's model.`);
         }
         // TODO: simplify this
         switch (requestType) {
             case RequestType.property:
                 if (typeof model[property] === 'function') {
-                    throwError(`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`);
+                    bimeThrowError(`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`);
                 }
                 break;
             case RequestType.function:
                 if (typeof model[property] !== 'function') {
-                    throwError(`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`);
+                    bimeThrowError(`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`);
                 }
                 break;
         }
@@ -161,14 +182,27 @@ function handleRequest(context, messageData) {
         sendResponse(context, id, response, error);
     });
 }
-function createUUID() {
-    return self.crypto.randomUUID();
+
+function bime(target, model = {}, targetOrigin, devMode = false) {
+    const messagesSent = {};
+    const context = {
+        target,
+        model,
+        messagesSent,
+        targetOrigin,
+        devMode,
+    };
+    window.addEventListener('message', handleMessage.bind(null, context), false);
+    return {
+        get: getProperty.bind(null, context),
+        invoke: invokeMethod.bind(null, context),
+    };
 }
-function throwError(message) {
-    throw new Error(`bime: ${message}`);
+function getProperty(context, property) {
+    return sendRequest(context, RequestType.property, property);
 }
-throwError.prototype = Error.prototype;
-function warn(message) {
-    console.warn(`bime: ${message}`);
+function invokeMethod(context, property, args) {
+    return sendRequest(context, RequestType.function, property, args);
 }
-export default bime;
+
+export { bime as default };
