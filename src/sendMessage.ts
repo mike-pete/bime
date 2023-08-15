@@ -4,6 +4,8 @@ import { createUUID } from './utils'
 function storeMessageState(context: Context, id: string) {
 	const { messagesSent } = context
 
+	messagesSent[id] = {}
+
 	const data = new Promise((resolve, reject) => {
 		messagesSent[id].resolve = resolve
 		messagesSent[id].reject = reject
@@ -15,7 +17,7 @@ function storeMessageState(context: Context, id: string) {
 		error: undefined,
 	}
 
-	messagesSent[id] = { state }
+	messagesSent[id].state = state
 
 	return state
 }
@@ -37,7 +39,12 @@ export function sendRequest(
 	return state
 }
 
-export function sendResponse(context: Context, id: string, data: any, error?: string) {
+export function sendResponse(
+	context: Context,
+	id: string,
+	data: any,
+	error?: string
+) {
 	const { target, targetOrigin } = context
 	const response = JSON.stringify({
 		id,

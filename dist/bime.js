@@ -53,6 +53,7 @@ function bimeLogError(message) {
 
 function storeMessageState(context, id) {
     const { messagesSent } = context;
+    messagesSent[id] = {};
     const data = new Promise((resolve, reject) => {
         messagesSent[id].resolve = resolve;
         messagesSent[id].reject = reject;
@@ -62,7 +63,7 @@ function storeMessageState(context, id) {
         data,
         error: undefined,
     };
-    messagesSent[id] = { state };
+    messagesSent[id].state = state;
     return state;
 }
 function sendRequest(context, requestType, property, args = []) {
@@ -115,14 +116,13 @@ function handleMessage(context, event) {
 function handleResponse(context, messageData) {
     const { messagesSent, devMode } = context;
     const { id, data, error } = messageData;
-    const { reject, resolve } = messagesSent[id];
+    const { reject, resolve, state } = messagesSent[id];
     if (!(id in messagesSent)) {
         devMode &&
             bimeLogWarning(`Response received for unknown message. This response may be for another instance of bime.`);
         return;
     }
     if (error) {
-        messagesSent[id].state.error = error;
         if (reject && typeof reject === 'function') {
             reject(error);
         }
@@ -140,8 +140,10 @@ function handleResponse(context, messageData) {
                 bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`);
         }
     }
-    messagesSent[id].state.loading = false;
-    messagesSent[id].state.error = error;
+    if (state) {
+        state.loading = false;
+        state.error = error;
+    }
     // it should be safe to remove the message from the messagesSent store
     // because the application should be maintaining a reference to the state object
     delete messagesSent[id];

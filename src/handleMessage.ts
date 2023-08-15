@@ -1,6 +1,6 @@
-import { sendResponse } from "./sendMessage"
-import { Context, RequestType } from "./types"
-import { bimeLogError, bimeLogWarning, bimeThrowError } from "./utils"
+import { sendResponse } from './sendMessage'
+import { Context, RequestType } from './types'
+import { bimeLogError, bimeLogWarning, bimeThrowError } from './utils'
 
 type MessageData = {
 	id: string
@@ -46,7 +46,7 @@ function handleMessage(context: Context, event: MessageEvent) {
 function handleResponse(context: Context, messageData: MessageData) {
 	const { messagesSent, devMode } = context
 	const { id, data, error } = messageData
-	const { reject, resolve } = messagesSent[id]
+	const { reject, resolve, state } = messagesSent[id]
 
 	if (!(id in messagesSent)) {
 		devMode &&
@@ -57,7 +57,6 @@ function handleResponse(context: Context, messageData: MessageData) {
 	}
 
 	if (error) {
-		messagesSent[id].state.error = error
 		if (reject && typeof reject === 'function') {
 			reject(error)
 		} else {
@@ -75,8 +74,10 @@ function handleResponse(context: Context, messageData: MessageData) {
 		}
 	}
 
-	messagesSent[id].state.loading = false
-	messagesSent[id].state.error = error
+	if (state) {
+		state.loading = false
+		state.error = error
+	}
 
 	// it should be safe to remove the message from the messagesSent store
 	// because the application should be maintaining a reference to the state object
@@ -127,6 +128,5 @@ async function handleRequest(context: Context, messageData: MessageData) {
 
 	sendResponse(context, id, response, error)
 }
-
 
 export default handleMessage

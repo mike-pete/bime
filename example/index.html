@@ -19,33 +19,17 @@
 				pong: () => console.log('index: pong'),
 			}
 			const target = document.getElementById('iframe').contentWindow
-			const bi = bime(target, model, "http://127.0.0.1:5500")
+			const bi = bime(target, model, 'http://127.0.0.1:5500')
 
 			document
 				.getElementById('message_button')
 				.addEventListener('click', () => {
-					// bi.invoke('greet', ['Mike', 30, 'Andrew'])
-					// bi.get('greet', ['Mike', 30, 'Andrew'])
-					// bi.invoke('age')
-					// bi.invoke('notReal')
-					// bi.get('notReal')
-					// bi.invoke('setName', ['Mike Peterson'])
-					// bi.invoke('logName')
-					// bi.get()
-					// bi.invoke()
-
-					// const age = bi.get('age')
-					// console.log('age', age)
-					// console.log('get sent')
-					// age.data.then((data) => {
-					// 	console.log('age data returned')
-					// 	console.log('age state', age)
-					// 	console.log('age data', data)
-					// 	console.log('age state', age)
-					// })
-                    
-                    // bi.get('ping')
-					bi.invoke('ping')
+					const x = bi.invoke('ping')
+					console.log('x0', x)
+					x.data.then((r) => {
+						console.log('response', r)
+						console.log('x1', x)
+					})
 				})
 		</script>
 	</body>

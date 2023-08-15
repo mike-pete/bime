@@ -10,35 +10,24 @@
 		<script type="module">
 			import bime from '../dist/bime.js'
 
-			const greetFunction = (name = '', age, friend) => {
-				if (name) {
-					console.log(`Hello ${name}!`)
-				} else {
-					console.log('Hello!')
-				}
-				console.log(`other info: ${age} ${friend}`)
+			function delayedResponse(response, delay=1000) {
+				return new Promise((resolve, reject) => {
+					setTimeout(() => {
+						resolve(response)
+					}, delay)
+				})
 			}
 
-            const data = {
-                name: 'Mike',
-                age: 24,
-            }
-
 			const model = {
-				greet: greetFunction,
-				age: data.age,
-                logName: () => console.log(data.name),
-                setName: (name) => {
-                    data.name = name
-                },
-                ping: () => {
-                    console.log('iframe: ping')
-                    bi.invoke('pong')
-                }
+				ping: async () => {
+					console.log('iframe: ping')
+					bi.invoke('pong')
+					return await delayedResponse('ping response', 1000)
+				},
 			}
 
 			const target = window.parent
-			const bi = bime(target, model, "http://127.0.0.1:5500")
+			const bi = bime(target, model, 'http://127.0.0.1:5500')
 		</script>
 	</body>
 </html>

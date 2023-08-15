@@ -5,7 +5,7 @@ export type State = {
 }
 
 export type MessageSentRecord = {
-	state: State
+	state?: State
 	resolve?: (value: any) => void
 	reject?: (reason?: any) => void
 }
