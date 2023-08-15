@@ -7,4 +7,5 @@
 - [] eslint
 - [] Better errors around improper usage?
 - [] Docs
+- [] CI Pipeline for automatic publishing on merge to main
 - [] License
