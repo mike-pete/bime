@@ -28,6 +28,7 @@
 	},
 	"homepage": "https://github.com/mike-pete/bime#readme",
 	"devDependencies": {
+		"@rollup/plugin-terser": "^0.4.3",
 		"@rollup/plugin-typescript": "^11.1.2",
 		"tslib": "^2.6.1"
 	}
