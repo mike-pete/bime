@@ -1,5 +1,11 @@
 import { RequestType } from './enums'
-import type { Context, State } from './types'
+import type {
+	Context,
+	ModelProperty,
+	RequestMessage,
+	ResponseMessage,
+	State,
+} from './types'
 import { createUUID } from './utils'
 
 function storeMessageState(context: Context, id: string) {
@@ -27,10 +33,16 @@ export function sendRequest(
 	context: Context,
 	requestType: RequestType,
 	property: string,
-	args: any[] = []
+	args: ModelProperty[] = []
 ) {
 	const id = createUUID()
-	const data = JSON.stringify({ id, requestType, property, args })
+	const messageData: RequestMessage = {
+		id,
+		requestType,
+		property,
+		args,
+	}
+	const data = JSON.stringify(messageData)
 	const { target, targetOrigin } = context
 
 	const state = storeMessageState(context, id)
@@ -47,11 +59,15 @@ export function sendResponse(
 	error?: string
 ) {
 	const { target, targetOrigin } = context
-	const response = JSON.stringify({
+
+	const responseData: ResponseMessage = {
 		id,
 		requestType: RequestType.response,
 		data,
 		error,
-	})
+	}
+
+	const response = JSON.stringify(responseData)
+
 	target.postMessage(response, targetOrigin)
 }

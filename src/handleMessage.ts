@@ -1,6 +1,6 @@
 import { RequestType } from './enums'
 import { sendResponse } from './sendMessage'
-import type { Context, MessageData } from './types'
+import type { Context, RequestMessage, ResponseMessage } from './types'
 import { bimeLogError, bimeLogWarning, bimeThrowError } from './utils'
 
 
@@ -37,7 +37,7 @@ function handleMessage(context: Context, event: MessageEvent) {
 	}
 }
 
-function handleResponse(context: Context, messageData: MessageData) {
+function handleResponse(context: Context, messageData: ResponseMessage) {
 	const { messagesSent, devMode } = context
 	const { id, data, error } = messageData
 	const { reject, resolve, state } = messagesSent[id]
@@ -78,7 +78,7 @@ function handleResponse(context: Context, messageData: MessageData) {
 	delete messagesSent[id]
 }
 
-async function handleRequest(context: Context, messageData: MessageData) {
+async function handleRequest(context: Context, messageData: RequestMessage) {
 	const { model } = context
 	const { requestType, property, args, id } = messageData
 

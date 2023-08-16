@@ -1,4 +1,4 @@
-import { RequestType } from "./enums"
+import { RequestType } from './enums'
 
 export type State = {
 	loading: boolean
@@ -20,13 +20,19 @@ export type Context = {
 	devMode: boolean
 }
 
-export type MessageData = {
+type MessageIdentifier = {
 	id: string
-	data: ModelProperty
-	error?: string
 	requestType: RequestType
+}
+
+export type RequestMessage = MessageIdentifier & {
 	property: string
 	args?: any
+}
+
+export type ResponseMessage = MessageIdentifier & {
+	data?: ModelProperty
+	error?: string
 }
 
 export type ModelProperty = string | number | boolean | null | undefined

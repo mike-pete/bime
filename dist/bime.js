@@ -68,7 +68,13 @@ function storeMessageState(context, id) {
 }
 function sendRequest(context, requestType, property, args = []) {
     const id = createUUID();
-    const data = JSON.stringify({ id, requestType, property, args });
+    const messageData = {
+        id,
+        requestType,
+        property,
+        args,
+    };
+    const data = JSON.stringify(messageData);
     const { target, targetOrigin } = context;
     const state = storeMessageState(context, id);
     target.postMessage(data, targetOrigin);
@@ -76,12 +82,13 @@ function sendRequest(context, requestType, property, args = []) {
 }
 function sendResponse(context, id, data, error) {
     const { target, targetOrigin } = context;
-    const response = JSON.stringify({
+    const responseData = {
         id,
         requestType: RequestType.response,
         data,
         error,
-    });
+    };
+    const response = JSON.stringify(responseData);
     target.postMessage(response, targetOrigin);
 }
 
