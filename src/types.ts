@@ -37,7 +37,8 @@ export type ResponseMessage = MessageIdentifier & {
 	error?: string
 }
 
-export type ModelProperty = string | number | boolean | null | undefined
+type BaseTypes = string | number | boolean | null | undefined 
+export type ModelProperty =  BaseTypes | BaseTypes[] | Record<string | number, BaseTypes>
 
 export type ModelFunction = (
 	...args: ModelProperty[]
