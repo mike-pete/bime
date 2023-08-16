@@ -1,4 +1,3 @@
-- [] TS (remove any)
 - [] .d.ts
 - [] TS generic typing for remote model
 - [] Handshake

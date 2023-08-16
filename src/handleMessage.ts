@@ -3,6 +3,7 @@ import { sendResponse } from './sendMessage'
 import type {
 	Context,
 	ModelFunction,
+	ModelProperty,
 	RequestMessage,
 	ResponseMessage,
 } from './types'
@@ -112,13 +113,13 @@ async function handleRequest(context: Context, messageData: RequestMessage) {
 			break
 	}
 
-	let response
+	let response: ModelProperty
 
 	if (typeof model[property] !== 'function') {
-		response = model[property]
+		response = model[property] as ModelProperty
 	} else {
 		const functionToInvoke = model[property] as ModelFunction
-		response = await functionToInvoke(...args)
+		response = await functionToInvoke(...args ?? [])
 	}
 
 	// TODO

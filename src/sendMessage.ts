@@ -55,7 +55,7 @@ export function sendRequest(
 export function sendResponse(
 	context: Context,
 	id: string,
-	data: any,
+	data: ModelProperty,
 	error?: string
 ) {
 	const { target, targetOrigin } = context

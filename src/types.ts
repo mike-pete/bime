@@ -27,7 +27,7 @@ type MessageIdentifier = {
 
 export type RequestMessage = MessageIdentifier & {
 	property: string
-	args?: any
+	args?: ModelProperty[]
 }
 
 export type ResponseMessage = MessageIdentifier & {

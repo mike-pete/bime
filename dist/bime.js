@@ -185,7 +185,7 @@ function handleRequest(context, messageData) {
         }
         else {
             const functionToInvoke = model[property];
-            response = yield functionToInvoke(...args);
+            response = yield functionToInvoke(...args !== null && args !== void 0 ? args : []);
         }
         // TODO
         let error;
