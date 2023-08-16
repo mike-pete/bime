@@ -12,9 +12,11 @@ export type MessageSentRecord = {
 	reject?: (reason?: string) => void
 }
 
+export type Model = Record<string, ModelItem>
+
 export type Context = {
 	target: Window
-	model: Record<string, ModelItem>
+	model: Model
 	messagesSent: Record<string, MessageSentRecord>
 	targetOrigin: string
 	devMode: boolean
@@ -37,6 +39,8 @@ export type ResponseMessage = MessageIdentifier & {
 
 export type ModelProperty = string | number | boolean | null | undefined
 
-export type ModelFunction = (...args: ModelProperty[]) => (ModelProperty | Promise<ModelProperty>)
+export type ModelFunction = (
+	...args: ModelProperty[]
+) => ModelProperty | Promise<ModelProperty>
 
 export type ModelItem = ModelProperty | ModelFunction

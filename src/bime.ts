@@ -1,11 +1,11 @@
 import { RequestType } from './enums'
 import handleMessage from './handleMessage'
 import { sendRequest } from './sendMessage'
-import type { Context, MessageSentRecord, ModelItem, ModelProperty } from './types'
+import type { Context, MessageSentRecord, Model, ModelProperty } from './types'
 
 function bime(
 	target: Window,
-	model: Record<string, ModelItem> = {},
+	model: Model = {},
 	targetOrigin: string,
 	devMode = false
 ) {
@@ -30,7 +30,11 @@ function getProperty(context: Context, property: string) {
 	return sendRequest(context, RequestType.property, property)
 }
 
-function invokeMethod(context: Context, property: string, args: ModelProperty[]) {
+function invokeMethod(
+	context: Context,
+	property: string,
+	args: ModelProperty[]
+) {
 	return sendRequest(context, RequestType.function, property, args)
 }
 
