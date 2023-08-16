@@ -1,6 +1,6 @@
 import { RequestType } from './enums'
 import handleMessage from './handleMessage'
-import { sendRequest } from './sendMessage'
+import { sendRequest, sendSyn } from './sendMessage'
 import type { Context, MessageSentRecord, Model, ModelProperty } from './types'
 
 function bime(
@@ -13,10 +13,21 @@ function bime(
 	const context: Context = {
 		target,
 		model,
-		messagesSent,
+		lastMessageSent: undefined, // number of messages sent
+		lastAckReceived: undefined, // last message that was acknowledged by remote
+		lastAckSent: undefined, // last message that we acknowledged
+		messagesSent, // store of sent messages that haven't been resolved
 		targetOrigin,
 		devMode,
 	}
+
+	const interval = setInterval(() => {
+		if (context.lastAckReceived !== undefined || context.lastAckSent !== undefined) {
+			clearInterval(interval)
+		} else {
+			sendSyn(context)
+		}
+	}, 100)
 
 	window.addEventListener('message', handleMessage.bind(null, context), false)
 

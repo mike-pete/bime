@@ -1,7 +1,8 @@
 import { RequestType } from './enums'
-import { sendResponse } from './sendMessage'
+import { sendAck, sendResponse, sendSynAck } from './sendMessage'
 import type {
 	Context,
+	MessageIdentifier,
 	ModelFunction,
 	ModelProperty,
 	RequestMessage,
@@ -34,10 +35,18 @@ function handleMessage(context: Context, event: MessageEvent) {
 		return
 	}
 
-	if (messageData.requestType === RequestType.response) {
-		handleResponse(context, messageData)
-	} else {
-		handleRequest(context, messageData)
+	switch (messageData.requestType) {
+		case RequestType.response:
+			return handleResponse(context, messageData)
+		case RequestType.property:
+		case RequestType.function:
+			return handleRequest(context, messageData)
+		case RequestType.syn:
+			return handleSyn(context)
+		case RequestType.synAck:
+			return handleSynAck(context)
+		case RequestType.ack:
+			return handleAck(context, messageData)
 	}
 }
 
@@ -119,13 +128,30 @@ async function handleRequest(context: Context, messageData: RequestMessage) {
 		response = model[property] as ModelProperty
 	} else {
 		const functionToInvoke = model[property] as ModelFunction
-		response = await functionToInvoke(...args ?? [])
+		response = await functionToInvoke(...(args ?? []))
 	}
 
 	// TODO
 	let error
 
 	sendResponse(context, id, response, error)
+}
+
+function handleSyn(context: Context) {
+	console.log('handleSyn')
+	sendSynAck(context)
+}
+
+function handleSynAck(context: Context) {
+	console.log('handle syn ack')
+	context.lastAckReceived = 0
+	sendAck(context, 0) // TODO: replace 0 with real id
+}
+
+function handleAck(context: Context, messageData: MessageIdentifier) {
+	const { id } = messageData
+	console.log('handle ack', id)
+	context.lastAckReceived = id
 }
 
 export default handleMessage

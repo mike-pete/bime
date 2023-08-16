@@ -1,7 +1,3 @@
-export function createUUID() {
-	return self.crypto.randomUUID()
-}
-
 export function bimeThrowError(message: string) {
 	throw new Error(`bime: ${message}`)
 }

@@ -3,6 +3,9 @@ var RequestType;
     RequestType["function"] = "function";
     RequestType["property"] = "property";
     RequestType["response"] = "response";
+    RequestType["syn"] = "syn";
+    RequestType["synAck"] = "synAck";
+    RequestType["ack"] = "ack";
 })(RequestType || (RequestType = {}));
 
 /******************************************************************************
@@ -37,23 +40,12 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
-function createUUID() {
-    return self.crypto.randomUUID();
-}
-function bimeThrowError(message) {
-    throw new Error(`bime: ${message}`);
-}
-bimeThrowError.prototype = Error.prototype;
-function bimeLogWarning(message) {
-    console.warn(`bime: ${message}`);
-}
-function bimeLogError(message) {
-    console.error(`BIME LEVEL ERROR: ${message}`);
-}
-
-function storeMessageState(context, id) {
+function storeMessageState(context, id, request) {
     const { messagesSent } = context;
-    messagesSent[id] = {};
+    messagesSent[id] = {
+        acknowledged: false,
+        request,
+    };
     const data = new Promise((resolve, reject) => {
         messagesSent[id].resolve = resolve;
         messagesSent[id].reject = reject;
@@ -66,30 +58,69 @@ function storeMessageState(context, id) {
     messagesSent[id].state = state;
     return state;
 }
+function sendMessage(context, message) {
+    const { target, targetOrigin } = context;
+    target.postMessage(JSON.stringify(message), targetOrigin);
+}
 function sendRequest(context, requestType, property, args = []) {
-    const id = createUUID();
-    const messageData = {
+    var _a;
+    const id = (_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0 + 1;
+    const requestData = {
         id,
         requestType,
         property,
         args,
     };
-    const data = JSON.stringify(messageData);
-    const { target, targetOrigin } = context;
-    const state = storeMessageState(context, id);
-    target.postMessage(data, targetOrigin);
+    const state = storeMessageState(context, id, requestData);
+    sendMessage(context, requestData);
     return state;
 }
 function sendResponse(context, id, data, error) {
-    const { target, targetOrigin } = context;
-    const responseData = {
+    const response = {
         id,
         requestType: RequestType.response,
         data,
         error,
     };
-    const response = JSON.stringify(responseData);
-    target.postMessage(response, targetOrigin);
+    sendMessage(context, response);
+}
+function sendSyn(context) {
+    context.lastMessageSent = 0;
+    console.log('sending syn');
+    const message = {
+        id: 0,
+        requestType: RequestType.syn,
+    };
+    sendMessage(context, message);
+}
+function sendSynAck(context) {
+    console.log('sending syn ack');
+    const message = {
+        id: 0,
+        requestType: RequestType.synAck,
+    };
+    sendMessage(context, message);
+    context.lastAckSent = 0;
+}
+function sendAck(context, remoteId) {
+    console.log('sending ack');
+    const message = {
+        id: remoteId,
+        requestType: RequestType.ack,
+    };
+    sendMessage(context, message);
+    context.lastAckSent = remoteId;
+}
+
+function bimeThrowError(message) {
+    throw new Error(`bime: ${message}`);
+}
+bimeThrowError.prototype = Error.prototype;
+function bimeLogWarning(message) {
+    console.warn(`bime: ${message}`);
+}
+function bimeLogError(message) {
+    console.error(`BIME LEVEL ERROR: ${message}`);
 }
 
 function handleMessage(context, event) {
@@ -113,11 +144,18 @@ function handleMessage(context, event) {
         // ignore messages that don't have a requestType, they're not relevant to bime
         return;
     }
-    if (messageData.requestType === RequestType.response) {
-        handleResponse(context, messageData);
-    }
-    else {
-        handleRequest(context, messageData);
+    switch (messageData.requestType) {
+        case RequestType.response:
+            return handleResponse(context, messageData);
+        case RequestType.property:
+        case RequestType.function:
+            return handleRequest(context, messageData);
+        case RequestType.syn:
+            return handleSyn(context);
+        case RequestType.synAck:
+            return handleSynAck(context);
+        case RequestType.ack:
+            return handleAck(context, messageData);
     }
 }
 function handleResponse(context, messageData) {
@@ -185,12 +223,26 @@ function handleRequest(context, messageData) {
         }
         else {
             const functionToInvoke = model[property];
-            response = yield functionToInvoke(...args !== null && args !== void 0 ? args : []);
+            response = yield functionToInvoke(...(args !== null && args !== void 0 ? args : []));
         }
         // TODO
         let error;
         sendResponse(context, id, response, error);
     });
+}
+function handleSyn(context) {
+    console.log('handleSyn');
+    sendSynAck(context);
+}
+function handleSynAck(context) {
+    console.log('handle syn ack');
+    context.lastAckReceived = 0;
+    sendAck(context, 0); // TODO: replace 0 with real id
+}
+function handleAck(context, messageData) {
+    const { id } = messageData;
+    console.log('handle ack', id);
+    context.lastAckReceived = id;
 }
 
 function bime(target, model = {}, targetOrigin, devMode = false) {
@@ -198,10 +250,21 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
     const context = {
         target,
         model,
+        lastMessageSent: undefined,
+        lastAckReceived: undefined,
+        lastAckSent: undefined,
         messagesSent,
         targetOrigin,
         devMode,
     };
+    const interval = setInterval(() => {
+        if (context.lastAckReceived !== undefined || context.lastAckSent !== undefined) {
+            clearInterval(interval);
+        }
+        else {
+            sendSyn(context);
+        }
+    }, 100);
     window.addEventListener('message', handleMessage.bind(null, context), false);
     return {
         get: getProperty.bind(null, context),

@@ -8,6 +8,8 @@ export type State = {
 
 export type MessageSentRecord = {
 	state?: State
+	acknowledged: boolean
+	request: RequestMessage
 	resolve?: (value: ModelProperty) => void
 	reject?: (reason?: string) => void
 }
@@ -17,13 +19,16 @@ export type Model = Record<string, ModelItem>
 export type Context = {
 	target: Window
 	model: Model
+	lastMessageSent?: number
+	lastAckReceived?: number
+	lastAckSent?: number
 	messagesSent: Record<string, MessageSentRecord>
 	targetOrigin: string
 	devMode: boolean
 }
 
-type MessageIdentifier = {
-	id: string
+export type MessageIdentifier = {
+	id: number
 	requestType: RequestType
 }
 
@@ -37,8 +42,12 @@ export type ResponseMessage = MessageIdentifier & {
 	error?: string
 }
 
-type BaseTypes = string | number | boolean | null | undefined 
-export type ModelProperty =  BaseTypes | BaseTypes[] | Record<string | number, BaseTypes>
+type BaseTypes = string | number | boolean | null | undefined
+
+export type ModelProperty =
+	| BaseTypes
+	| BaseTypes[]
+	| Record<string | number, BaseTypes>
 
 export type ModelFunction = (
 	...args: ModelProperty[]
