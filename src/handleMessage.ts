@@ -1,9 +1,12 @@
 import { RequestType } from './enums'
 import { sendResponse } from './sendMessage'
-import type { Context, RequestMessage, ResponseMessage } from './types'
+import type {
+	Context,
+	ModelFunction,
+	RequestMessage,
+	ResponseMessage,
+} from './types'
 import { bimeLogError, bimeLogWarning, bimeThrowError } from './utils'
-
-
 
 function handleMessage(context: Context, event: MessageEvent) {
 	const { targetOrigin, devMode } = context
@@ -114,7 +117,8 @@ async function handleRequest(context: Context, messageData: RequestMessage) {
 	if (typeof model[property] !== 'function') {
 		response = model[property]
 	} else {
-		response = await model[property](...args)
+		const functionToInvoke = model[property] as ModelFunction
+		response = await functionToInvoke(...args)
 	}
 
 	// TODO

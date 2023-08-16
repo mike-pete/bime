@@ -2,19 +2,19 @@ import { RequestType } from './enums'
 
 export type State = {
 	loading: boolean
-	data: Promise<any>
+	data: Promise<ModelProperty>
 	error?: string
 }
 
 export type MessageSentRecord = {
 	state?: State
-	resolve?: (value: any) => void
-	reject?: (reason?: any) => void
+	resolve?: (value: ModelProperty) => void
+	reject?: (reason?: string) => void
 }
 
 export type Context = {
 	target: Window
-	model: Record<string, any>
+	model: Record<string, ModelItem>
 	messagesSent: Record<string, MessageSentRecord>
 	targetOrigin: string
 	devMode: boolean
@@ -37,6 +37,6 @@ export type ResponseMessage = MessageIdentifier & {
 
 export type ModelProperty = string | number | boolean | null | undefined
 
-type ModelFunction = (...args: ModelProperty[]) => ModelItem
+export type ModelFunction = (...args: ModelProperty[]) => (ModelProperty | Promise<ModelProperty>)
 
 export type ModelItem = ModelProperty | ModelFunction

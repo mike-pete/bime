@@ -13,7 +13,7 @@ function storeMessageState(context: Context, id: string) {
 
 	messagesSent[id] = {}
 
-	const data = new Promise((resolve, reject) => {
+	const data: Promise<ModelProperty> = new Promise((resolve, reject) => {
 		messagesSent[id].resolve = resolve
 		messagesSent[id].reject = reject
 	})
