@@ -1,3 +1,5 @@
+import { RequestType } from "./enums"
+
 export type State = {
 	loading: boolean
 	data: Promise<any>
@@ -18,8 +20,17 @@ export type Context = {
 	devMode: boolean
 }
 
-export enum RequestType {
-	function = 'function',
-	property = 'property',
-	response = 'response',
+export type MessageData = {
+	id: string
+	data: ModelProperty
+	error?: string
+	requestType: RequestType
+	property: string
+	args?: any
 }
+
+export type ModelProperty = string | number | boolean | null | undefined
+
+type ModelFunction = (...args: ModelProperty[]) => ModelItem
+
+export type ModelItem = ModelProperty | ModelFunction

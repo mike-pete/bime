@@ -1,3 +1,10 @@
+var RequestType;
+(function (RequestType) {
+    RequestType["function"] = "function";
+    RequestType["property"] = "property";
+    RequestType["response"] = "response";
+})(RequestType || (RequestType = {}));
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -29,13 +36,6 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     var e = new Error(message);
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
-
-var RequestType;
-(function (RequestType) {
-    RequestType["function"] = "function";
-    RequestType["property"] = "property";
-    RequestType["response"] = "response";
-})(RequestType || (RequestType = {}));
 
 function createUUID() {
     return self.crypto.randomUUID();

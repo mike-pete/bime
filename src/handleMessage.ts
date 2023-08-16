@@ -1,15 +1,9 @@
+import { RequestType } from './enums'
 import { sendResponse } from './sendMessage'
-import { Context, RequestType } from './types'
+import type { Context, MessageData } from './types'
 import { bimeLogError, bimeLogWarning, bimeThrowError } from './utils'
 
-type MessageData = {
-	id: string
-	data: any
-	error: string
-	requestType: RequestType
-	property: string
-	args: any
-}
+
 
 function handleMessage(context: Context, event: MessageEvent) {
 	const { targetOrigin, devMode } = context

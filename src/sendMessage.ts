@@ -1,4 +1,5 @@
-import { Context, RequestType, State } from './types'
+import { RequestType } from './enums'
+import type { Context, State } from './types'
 import { createUUID } from './utils'
 
 function storeMessageState(context: Context, id: string) {
