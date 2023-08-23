@@ -8,6 +8,12 @@ var RequestType;
     RequestType["ack"] = "ack";
 })(RequestType || (RequestType = {}));
 
+function handleAck(context, messageData) {
+    const { id } = messageData;
+    console.log('handle ack', id);
+    context.lastAckReceived = id;
+}
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -123,41 +129,53 @@ function bimeLogError(message) {
     console.error(`BIME LEVEL ERROR: ${message}`);
 }
 
-function handleMessage(context, event) {
-    const { targetOrigin, devMode } = context;
-    const { origin, data } = event;
-    if (targetOrigin != '*' && origin !== targetOrigin) {
-        if (devMode) {
-            bimeLogWarning(`Message received from unknown origin [ ${origin} ].`);
-        }
-        return;
+function validPropertyRequest(context, messageData) {
+    const { model } = context;
+    const { requestType, property } = messageData;
+    const propertyError = (error) => ({ valid: false, error });
+    if (!property) {
+        const label = requestType === RequestType.function ? 'function' : 'property';
+        return propertyError(`The ${label} name is required, but was not provided.`);
     }
-    let messageData;
-    try {
-        messageData = JSON.parse(data);
+    if (!(property in model)) {
+        return propertyError(`[ ${property} ] does not exist in the target's model.`);
     }
-    catch (_a) {
-        // ignore messages that aren't JSON, they're not relevant to bime
-        return;
-    }
-    if (!(messageData === null || messageData === void 0 ? void 0 : messageData.requestType)) {
-        // ignore messages that don't have a requestType, they're not relevant to bime
-        return;
-    }
-    switch (messageData.requestType) {
-        case RequestType.response:
-            return handleResponse(context, messageData);
+    switch (requestType) {
         case RequestType.property:
+            if (typeof model[property] === 'function') {
+                return propertyError(`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`);
+            }
+            break;
         case RequestType.function:
-            return handleRequest(context, messageData);
-        case RequestType.syn:
-            return handleSyn(context);
-        case RequestType.synAck:
-            return handleSynAck(context);
-        case RequestType.ack:
-            return handleAck(context, messageData);
+            if (typeof model[property] !== 'function') {
+                return propertyError(`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`);
+            }
+            break;
     }
+    return { valid: true, error: '' };
 }
+function handleRequest(context, messageData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { model } = context;
+        const { property, args, id } = messageData;
+        const { valid, error: propertyError } = validPropertyRequest(context, messageData);
+        if (!valid) {
+            bimeThrowError(propertyError !== null && propertyError !== void 0 ? propertyError : 'something went wrong');
+        }
+        let response;
+        if (typeof model[property] !== 'function') {
+            response = model[property];
+        }
+        else {
+            const functionToInvoke = model[property];
+            response = yield functionToInvoke(...(args !== null && args !== void 0 ? args : []));
+        }
+        // TODO
+        let error;
+        sendResponse(context, id, response, error);
+    });
+}
+
 function handleResponse(context, messageData) {
     const { messagesSent, devMode } = context;
     const { id, data, error } = messageData;
@@ -193,56 +211,52 @@ function handleResponse(context, messageData) {
     // because the application should be maintaining a reference to the state object
     delete messagesSent[id];
 }
-function handleRequest(context, messageData) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { model } = context;
-        const { requestType, property, args, id } = messageData;
-        if (!property) {
-            const label = requestType === RequestType.function ? 'function' : 'property';
-            bimeThrowError(`The ${label} name is required, but was not provided.`);
-        }
-        if (!(property in model)) {
-            bimeThrowError(`[ ${property} ] does not exist in the target's model.`);
-        }
-        // TODO: simplify this
-        switch (requestType) {
-            case RequestType.property:
-                if (typeof model[property] === 'function') {
-                    bimeThrowError(`[ ${property} ] is a function, not a property. Use \`invoke('${property}', [])\` instead.`);
-                }
-                break;
-            case RequestType.function:
-                if (typeof model[property] !== 'function') {
-                    bimeThrowError(`[ ${property} ] is a property, not a function. Use \`get('${property}')\` instead.`);
-                }
-                break;
-        }
-        let response;
-        if (typeof model[property] !== 'function') {
-            response = model[property];
-        }
-        else {
-            const functionToInvoke = model[property];
-            response = yield functionToInvoke(...(args !== null && args !== void 0 ? args : []));
-        }
-        // TODO
-        let error;
-        sendResponse(context, id, response, error);
-    });
-}
+
 function handleSyn(context) {
     console.log('handleSyn');
     sendSynAck(context);
 }
+
 function handleSynAck(context) {
     console.log('handle syn ack');
     context.lastAckReceived = 0;
     sendAck(context, 0); // TODO: replace 0 with real id
 }
-function handleAck(context, messageData) {
-    const { id } = messageData;
-    console.log('handle ack', id);
-    context.lastAckReceived = id;
+
+function handleMessage(context, event) {
+    const { targetOrigin, devMode } = context;
+    const { origin, data } = event;
+    if (targetOrigin != '*' && origin !== targetOrigin) {
+        if (devMode) {
+            bimeLogWarning(`Message received from unknown origin [ ${origin} ].`);
+        }
+        return;
+    }
+    let messageData;
+    try {
+        messageData = JSON.parse(data);
+    }
+    catch (_a) {
+        // ignore messages that aren't JSON, they're not relevant to bime
+        return;
+    }
+    if (!(messageData === null || messageData === void 0 ? void 0 : messageData.requestType)) {
+        // ignore messages that don't have a requestType, they're not relevant to bime
+        return;
+    }
+    switch (messageData.requestType) {
+        case RequestType.response:
+            return handleResponse(context, messageData);
+        case RequestType.property:
+        case RequestType.function:
+            return handleRequest(context, messageData);
+        case RequestType.syn:
+            return handleSyn(context);
+        case RequestType.synAck:
+            return handleSynAck(context);
+        case RequestType.ack:
+            return handleAck(context, messageData);
+    }
 }
 
 function bime(target, model = {}, targetOrigin, devMode = false) {
