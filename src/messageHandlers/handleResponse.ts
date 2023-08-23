@@ -1,7 +1,10 @@
-import { Context, ResponseMessage } from "../types"
-import { bimeLogError, bimeLogWarning } from "../utils"
+import { Context, ResponseMessage } from '../types'
+import { bimeLogError, bimeLogWarning } from '../utils'
 
-export default function handleResponse(context: Context, messageData: ResponseMessage) {
+export default function handleResponse(
+	context: Context,
+	messageData: ResponseMessage
+) {
 	const { messagesSent, devMode } = context
 	const { id, data, error } = messageData
 	const { reject, resolve, state } = messagesSent[id]
@@ -18,17 +21,13 @@ export default function handleResponse(context: Context, messageData: ResponseMe
 		if (reject && typeof reject === 'function') {
 			reject(error)
 		} else {
-			devMode &&
-				bimeLogError(`attempted to reject promise but reject was [${reject}]`)
+			bimeLogError(`attempted to reject promise but reject was [${reject}]`)
 		}
 	} else {
 		if (resolve && typeof resolve === 'function') {
 			resolve(data)
 		} else {
-			devMode &&
-				bimeLogError(
-					`attempted to resolve promise but resolve was [${resolve}]`
-				)
+			bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`)
 		}
 	}
 
