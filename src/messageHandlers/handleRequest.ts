@@ -1,5 +1,5 @@
 import { RequestType } from '../enums'
-import { sendResponse } from '../sendMessage'
+import sendResponse from '../messageSenders/sendResponse';
 import { Context, ModelFunction, ModelProperty, RequestMessage } from '../types'
 import { bimeThrowError } from '../utils'
 

@@ -1,6 +1,7 @@
 import { RequestType } from './enums'
 import handleMessage from './handleMessage'
-import { sendRequest, sendSyn } from './sendMessage'
+import sendRequest from './messageSenders/sendRequest'
+import sendSyn from './messageSenders/sendSyn'
 import type { Context, MessageSentRecord, Model, ModelProperty } from './types'
 
 function bime(

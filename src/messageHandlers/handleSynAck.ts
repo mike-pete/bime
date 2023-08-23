@@ -1,5 +1,5 @@
-import { sendAck } from "../sendMessage"
-import { Context } from "../types"
+import sendAck from '../messageSenders/sendAck'
+import { Context } from '../types'
 
 export default function handleSynAck(context: Context) {
 	console.log('handle syn ack')

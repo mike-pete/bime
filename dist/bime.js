@@ -46,41 +46,11 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
-function storeMessageState(context, id, request) {
-    const { messagesSent } = context;
-    messagesSent[id] = {
-        acknowledged: false,
-        request,
-    };
-    const data = new Promise((resolve, reject) => {
-        messagesSent[id].resolve = resolve;
-        messagesSent[id].reject = reject;
-    });
-    const state = {
-        loading: true,
-        data,
-        error: undefined,
-    };
-    messagesSent[id].state = state;
-    return state;
-}
 function sendMessage(context, message) {
     const { target, targetOrigin } = context;
     target.postMessage(JSON.stringify(message), targetOrigin);
 }
-function sendRequest(context, requestType, property, args = []) {
-    var _a;
-    const id = (_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0 + 1;
-    const requestData = {
-        id,
-        requestType,
-        property,
-        args,
-    };
-    const state = storeMessageState(context, id, requestData);
-    sendMessage(context, requestData);
-    return state;
-}
+
 function sendResponse(context, id, data, error) {
     const response = {
         id,
@@ -89,33 +59,6 @@ function sendResponse(context, id, data, error) {
         error,
     };
     sendMessage(context, response);
-}
-function sendSyn(context) {
-    context.lastMessageSent = 0;
-    console.log('sending syn');
-    const message = {
-        id: 0,
-        requestType: RequestType.syn,
-    };
-    sendMessage(context, message);
-}
-function sendSynAck(context) {
-    console.log('sending syn ack');
-    const message = {
-        id: 0,
-        requestType: RequestType.synAck,
-    };
-    sendMessage(context, message);
-    context.lastAckSent = 0;
-}
-function sendAck(context, remoteId) {
-    console.log('sending ack');
-    const message = {
-        id: remoteId,
-        requestType: RequestType.ack,
-    };
-    sendMessage(context, message);
-    context.lastAckSent = remoteId;
 }
 
 function bimeThrowError(message) {
@@ -210,9 +153,29 @@ function handleResponse(context, messageData) {
     delete messagesSent[id];
 }
 
+function sendSynAck(context) {
+    console.log('sending syn ack');
+    const message = {
+        id: 0,
+        requestType: RequestType.synAck,
+    };
+    sendMessage(context, message);
+    context.lastAckSent = 0;
+}
+
 function handleSyn(context) {
     console.log('handleSyn');
     sendSynAck(context);
+}
+
+function sendAck(context, remoteId) {
+    console.log('sending ack');
+    const message = {
+        id: remoteId,
+        requestType: RequestType.ack,
+    };
+    sendMessage(context, message);
+    context.lastAckSent = remoteId;
 }
 
 function handleSynAck(context) {
@@ -255,6 +218,48 @@ function handleMessage(context, event) {
         case RequestType.ack:
             return handleAck(context, messageData);
     }
+}
+
+function storeMessageState(context, id, request) {
+    const { messagesSent } = context;
+    messagesSent[id] = {
+        acknowledged: false,
+        request,
+    };
+    const data = new Promise((resolve, reject) => {
+        messagesSent[id].resolve = resolve;
+        messagesSent[id].reject = reject;
+    });
+    const state = {
+        loading: true,
+        data,
+        error: undefined,
+    };
+    messagesSent[id].state = state;
+    return state;
+}
+function sendRequest(context, requestType, property, args = []) {
+    var _a;
+    const id = (_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0 + 1;
+    const requestData = {
+        id,
+        requestType,
+        property,
+        args,
+    };
+    const state = storeMessageState(context, id, requestData);
+    sendMessage(context, requestData);
+    return state;
+}
+
+function sendSyn(context) {
+    context.lastMessageSent = 0;
+    console.log('sending syn');
+    const message = {
+        id: 0,
+        requestType: RequestType.syn,
+    };
+    sendMessage(context, message);
 }
 
 function bime(target, model = {}, targetOrigin, devMode = false) {
