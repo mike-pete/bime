@@ -190,8 +190,7 @@ function handleResponse(context, messageData) {
             reject(error);
         }
         else {
-            devMode &&
-                bimeLogError(`attempted to reject promise but reject was [${reject}]`);
+            bimeLogError(`attempted to reject promise but reject was [${reject}]`);
         }
     }
     else {
@@ -199,8 +198,7 @@ function handleResponse(context, messageData) {
             resolve(data);
         }
         else {
-            devMode &&
-                bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`);
+            bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`);
         }
     }
     if (state) {
