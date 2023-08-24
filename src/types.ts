@@ -33,14 +33,21 @@ export type MessageIdentifier = {
 }
 
 export type RequestMessage = MessageIdentifier & {
+	requestType: RequestType.function | RequestType.property
 	property: string
 	args?: ModelProperty[]
 }
 
 export type ResponseMessage = MessageIdentifier & {
+	requestType: RequestType.response
 	data?: ModelProperty
 	error?: string
 }
+
+export type ValidMessageData =
+	| MessageIdentifier
+	| RequestMessage
+	| ResponseMessage
 
 type BaseTypes = string | number | boolean | null | undefined
 

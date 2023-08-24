@@ -4,19 +4,39 @@ import handleRequest from './messageHandlers/handleRequest'
 import handleResponse from './messageHandlers/handleResponse'
 import handleSyn from './messageHandlers/handleSyn'
 import handleSynAck from './messageHandlers/handleSynAck'
-import type { Context } from './types'
+import type {
+	Context,
+	RequestMessage,
+	ResponseMessage,
+	ValidMessageData,
+} from './types'
 import { bimeLogWarning } from './utils'
 
 export default function handleMessage(context: Context, event: MessageEvent) {
-	const { targetOrigin, devMode } = context
-	const { origin, data } = event
+	const messageData = getMessageDataFromEvent(event)
+	if (!messageData) return
 
-	if (targetOrigin != '*' && origin !== targetOrigin) {
-		if (devMode) {
-			bimeLogWarning(`Message received from unknown origin [ ${origin} ].`)
-		}
-		return
+	const { requestType } = messageData
+
+	switch (requestType) {
+		case RequestType.response:
+			return handleResponse(context, messageData as ResponseMessage)
+		case RequestType.property:
+		case RequestType.function:
+			return handleRequest(context, messageData as RequestMessage)
+		case RequestType.syn:
+			return handleSyn(context)
+		case RequestType.synAck:
+			return handleSynAck(context)
+		case RequestType.ack:
+			return handleAck(context, messageData)
 	}
+}
+
+function getMessageDataFromEvent(
+	event: MessageEvent
+): ValidMessageData | undefined {
+	const { data } = event
 
 	let messageData
 
@@ -32,17 +52,21 @@ export default function handleMessage(context: Context, event: MessageEvent) {
 		return
 	}
 
-	switch (messageData.requestType) {
-		case RequestType.response:
-			return handleResponse(context, messageData)
-		case RequestType.property:
-		case RequestType.function:
-			return handleRequest(context, messageData)
-		case RequestType.syn:
-			return handleSyn(context)
-		case RequestType.synAck:
-			return handleSynAck(context)
-		case RequestType.ack:
-			return handleAck(context, messageData)
+	if (!('id' in messageData)) {
+		// ignore messages that don't have an id, they're not relevant to bime
+		return
 	}
+
+	const { requestType } = messageData
+	const messageIsRequest =
+		requestType === RequestType.property || requestType === RequestType.function
+
+	if (messageIsRequest && !('property' in messageData)) {
+		bimeLogWarning(
+			`A request was made, but no property or function was provided.`
+		)
+		return
+	}
+
+	return messageData
 }

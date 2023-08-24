@@ -3,6 +3,7 @@ import handleMessage from './handleMessage'
 import sendRequest from './messageSenders/sendRequest'
 import sendSyn from './messageSenders/sendSyn'
 import type { Context, MessageSentRecord, Model, ModelProperty } from './types'
+import { bimeLogWarning } from './utils'
 
 function bime(
 	target: Window,
@@ -22,19 +23,31 @@ function bime(
 		devMode,
 	}
 
-	const interval = setInterval(() => {
-		if (context.lastAckReceived !== undefined || context.lastAckSent !== undefined) {
-			clearInterval(interval)
-		} else {
-			sendSyn(context)
-		}
-	}, 100)
-
-	window.addEventListener('message', handleMessage.bind(null, context), false)
+	sendSynMessages(context)
+	window.addEventListener('message', messageListener.bind(null, context), false)
 
 	return {
 		get: getProperty.bind(null, context),
 		invoke: invokeMethod.bind(null, context),
+	}
+}
+
+function sendSynMessages(context: Context) {
+	const interval = setInterval(() => {
+		const receivedAck = context.lastAckReceived !== undefined
+		const sentAck = context.lastAckSent !== undefined
+
+		if (receivedAck || sentAck) {
+			return clearInterval(interval)
+		}
+
+		sendSyn(context)
+	}, 100)
+}
+
+function messageListener(context: Context, event: MessageEvent) {
+	if (originIsValid(context, event)) {
+		handleMessage(context, event)
 	}
 }
 
@@ -48,6 +61,19 @@ function invokeMethod(
 	args: ModelProperty[]
 ) {
 	return sendRequest(context, RequestType.function, property, args)
+}
+
+function originIsValid(
+	{ targetOrigin, devMode }: Context,
+	{ origin }: MessageEvent
+): boolean {
+	const originIsValid = targetOrigin === '*' || origin === targetOrigin
+
+	if (!originIsValid && devMode) {
+		bimeLogWarning(`Message received from unknown origin [ ${origin} ].`)
+	}
+
+	return originIsValid
 }
 
 export default bime

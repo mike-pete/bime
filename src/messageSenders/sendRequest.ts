@@ -1,6 +1,6 @@
-import { RequestType } from "../enums"
-import { sendMessage } from "../sendMessage"
-import { Context, ModelProperty, RequestMessage, State } from "../types"
+import { RequestType } from '../enums'
+import { sendMessage } from '../sendMessage'
+import { Context, ModelProperty, RequestMessage, State } from '../types'
 
 function storeMessageState(
 	context: Context,
@@ -32,7 +32,7 @@ function storeMessageState(
 
 export default function sendRequest(
 	context: Context,
-	requestType: RequestType,
+	requestType: RequestType.function | RequestType.property,
 	property: string,
 	args: ModelProperty[] = []
 ) {

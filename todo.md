@@ -15,6 +15,7 @@
   - Add a uuid for the communication connection between the two windows, this will allow for multiple connections between the same two windows
   - make a note somewhere on how the handshake works (using IDs as a sequence number, sequence numbers are based on message count, ack doesn't increment sequence number, etc.)
 
+- add warning about the dangers of using "*" as targetOrigin
 - expose a listener killer/cleanup function
 - .d.ts
 - TS generic typing for remote model

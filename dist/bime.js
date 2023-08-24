@@ -185,27 +185,11 @@ function handleSynAck(context) {
 }
 
 function handleMessage(context, event) {
-    const { targetOrigin, devMode } = context;
-    const { origin, data } = event;
-    if (targetOrigin != '*' && origin !== targetOrigin) {
-        if (devMode) {
-            bimeLogWarning(`Message received from unknown origin [ ${origin} ].`);
-        }
+    const messageData = getMessageDataFromEvent(event);
+    if (!messageData)
         return;
-    }
-    let messageData;
-    try {
-        messageData = JSON.parse(data);
-    }
-    catch (_a) {
-        // ignore messages that aren't JSON, they're not relevant to bime
-        return;
-    }
-    if (!(messageData === null || messageData === void 0 ? void 0 : messageData.requestType)) {
-        // ignore messages that don't have a requestType, they're not relevant to bime
-        return;
-    }
-    switch (messageData.requestType) {
+    const { requestType } = messageData;
+    switch (requestType) {
         case RequestType.response:
             return handleResponse(context, messageData);
         case RequestType.property:
@@ -218,6 +202,32 @@ function handleMessage(context, event) {
         case RequestType.ack:
             return handleAck(context, messageData);
     }
+}
+function getMessageDataFromEvent(event) {
+    const { data } = event;
+    let messageData;
+    try {
+        messageData = JSON.parse(data);
+    }
+    catch (_a) {
+        // ignore messages that aren't JSON, they're not relevant to bime
+        return;
+    }
+    if (!(messageData === null || messageData === void 0 ? void 0 : messageData.requestType)) {
+        // ignore messages that don't have a requestType, they're not relevant to bime
+        return;
+    }
+    if (!('id' in messageData)) {
+        // ignore messages that don't have an id, they're not relevant to bime
+        return;
+    }
+    const { requestType } = messageData;
+    const messageIsRequest = requestType === RequestType.property || requestType === RequestType.function;
+    if (messageIsRequest && !('property' in messageData)) {
+        bimeLogWarning(`A request was made, but no property or function was provided.`);
+        return;
+    }
+    return messageData;
 }
 
 function storeMessageState(context, id, request) {
@@ -274,25 +284,40 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
         targetOrigin,
         devMode,
     };
-    const interval = setInterval(() => {
-        if (context.lastAckReceived !== undefined || context.lastAckSent !== undefined) {
-            clearInterval(interval);
-        }
-        else {
-            sendSyn(context);
-        }
-    }, 100);
-    window.addEventListener('message', handleMessage.bind(null, context), false);
+    sendSynMessages(context);
+    window.addEventListener('message', messageListener.bind(null, context), false);
     return {
         get: getProperty.bind(null, context),
         invoke: invokeMethod.bind(null, context),
     };
+}
+function sendSynMessages(context) {
+    const interval = setInterval(() => {
+        const receivedAck = context.lastAckReceived !== undefined;
+        const sentAck = context.lastAckSent !== undefined;
+        if (receivedAck || sentAck) {
+            return clearInterval(interval);
+        }
+        sendSyn(context);
+    }, 100);
+}
+function messageListener(context, event) {
+    if (originIsValid(context, event)) {
+        handleMessage(context, event);
+    }
 }
 function getProperty(context, property) {
     return sendRequest(context, RequestType.property, property);
 }
 function invokeMethod(context, property, args) {
     return sendRequest(context, RequestType.function, property, args);
+}
+function originIsValid({ targetOrigin, devMode }, { origin }) {
+    const originIsValid = targetOrigin === '*' || origin === targetOrigin;
+    if (!originIsValid && devMode) {
+        bimeLogWarning(`Message received from unknown origin [ ${origin} ].`);
+    }
+    return originIsValid;
 }
 
 export { bime as default };
