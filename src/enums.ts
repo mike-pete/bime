@@ -3,6 +3,5 @@ export enum RequestType {
 	property = 'property',
 	response = 'response',
 	syn = 'syn',
-	synAck = 'synAck',
 	ack = 'ack',
 }

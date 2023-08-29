@@ -2,11 +2,8 @@ import { RequestType } from '../enums'
 import { sendMessage } from '../sendMessage'
 import { Context, ModelProperty, RequestMessage, State } from '../types'
 
-function storeMessageState(
-	context: Context,
-	id: number,
-	request: RequestMessage
-) {
+function storeMessageState(context: Context, request: RequestMessage) {
+	const { id } = request
 	const { messagesSent } = context
 
 	messagesSent[id] = {
@@ -36,7 +33,9 @@ export default function sendRequest(
 	property: string,
 	args: ModelProperty[] = []
 ) {
-	const id = context.lastMessageSent ?? 0 + 1
+	// TODO: if handshake not complete, queue message
+
+	const id = (context.lastMessageSent ?? 0) + 1
 	const requestData: RequestMessage = {
 		id,
 		requestType,
@@ -44,7 +43,7 @@ export default function sendRequest(
 		args,
 	}
 
-	const state = storeMessageState(context, id, requestData)
+	const state = storeMessageState(context, requestData)
 	sendMessage(context, requestData)
 	return state
 }

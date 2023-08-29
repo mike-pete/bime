@@ -34,11 +34,11 @@ function bime(
 
 function sendSynMessages(context: Context) {
 	const interval = setInterval(() => {
-		const receivedAck = context.lastAckReceived !== undefined
-		const sentAck = context.lastAckSent !== undefined
+		const { lastAckReceived } = context
 
-		if (receivedAck || sentAck) {
-			return clearInterval(interval)
+		if (typeof lastAckReceived === 'number') {
+			clearInterval(interval)
+			return // TODO: send queued messages
 		}
 
 		sendSyn(context)

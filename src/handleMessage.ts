@@ -2,10 +2,10 @@ import { RequestType } from './enums'
 import handleAck from './messageHandlers/handleAck'
 import handleRequest from './messageHandlers/handleRequest'
 import handleResponse from './messageHandlers/handleResponse'
-import handleSyn from './messageHandlers/handleSyn'
-import handleSynAck from './messageHandlers/handleSynAck'
+import sendAck from './messageSenders/sendAck'
 import type {
 	Context,
+	MessageIdentifier,
 	RequestMessage,
 	ResponseMessage,
 	ValidMessageData,
@@ -16,20 +16,31 @@ export default function handleMessage(context: Context, event: MessageEvent) {
 	const messageData = getMessageDataFromEvent(event)
 	if (!messageData) return
 
-	const { requestType } = messageData
+	const { requestType, id } = messageData
+	const { lastAckSent } = context
+
+	if (requestType !== RequestType.ack) {
+		// ignore messages that have already been acknowledged
+		// this cleans up the handshake process a bit
+		if (id === lastAckSent) {
+			return
+		}
+
+		const expectedId = typeof lastAckSent !== 'number' ? 0 : lastAckSent + 1
+		if (id !== expectedId) {
+			return sendAck(context, lastAckSent ?? 0)
+		}
+		sendAck(context, id)
+	}
 
 	switch (requestType) {
+		case RequestType.ack:
+			return handleAck(context, messageData as MessageIdentifier)
 		case RequestType.response:
 			return handleResponse(context, messageData as ResponseMessage)
 		case RequestType.property:
 		case RequestType.function:
 			return handleRequest(context, messageData as RequestMessage)
-		case RequestType.syn:
-			return handleSyn(context)
-		case RequestType.synAck:
-			return handleSynAck(context)
-		case RequestType.ack:
-			return handleAck(context, messageData)
 	}
 }
 

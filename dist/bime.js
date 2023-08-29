@@ -4,14 +4,40 @@ var RequestType;
     RequestType["property"] = "property";
     RequestType["response"] = "response";
     RequestType["syn"] = "syn";
-    RequestType["synAck"] = "synAck";
     RequestType["ack"] = "ack";
 })(RequestType || (RequestType = {}));
 
+function bimeThrowError(message) {
+    throw new Error(`bime: ${message}`);
+}
+bimeThrowError.prototype = Error.prototype;
+function bimeLogWarning(message) {
+    console.warn(`bime: ${message}`);
+}
+function bimeLogError(message) {
+    console.error(`BIME LEVEL ERROR: ${message}`);
+}
+
 function handleAck(context, messageData) {
     const { id } = messageData;
-    console.log('handle ack', id);
+    const { messagesSent } = context;
+    const isSyn = id === 0;
+    if (!isSyn) {
+        if (!messageExists(context, id)) {
+            return;
+        }
+        messagesSent[id].acknowledged = true;
+    }
     context.lastAckReceived = id;
+}
+function messageExists(context, id) {
+    const { messagesSent, devMode } = context;
+    if (!(id in messagesSent)) {
+        devMode &&
+            bimeLogWarning(`Received an acknowledgement for a message that doesn't exist. This could be intended for another instance of bime.`);
+        return false;
+    }
+    return true;
 }
 
 /******************************************************************************
@@ -47,8 +73,12 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 };
 
 function sendMessage(context, message) {
+    // TODO: if message id is > lastMessageSent + 1, add to queue
     const { target, targetOrigin } = context;
     target.postMessage(JSON.stringify(message), targetOrigin);
+    if (message.requestType !== 'ack') {
+        context.lastMessageSent = message.id;
+    }
 }
 
 function sendResponse(context, id, data, error) {
@@ -59,17 +89,6 @@ function sendResponse(context, id, data, error) {
         error,
     };
     sendMessage(context, response);
-}
-
-function bimeThrowError(message) {
-    throw new Error(`bime: ${message}`);
-}
-bimeThrowError.prototype = Error.prototype;
-function bimeLogWarning(message) {
-    console.warn(`bime: ${message}`);
-}
-function bimeLogError(message) {
-    console.error(`BIME LEVEL ERROR: ${message}`);
 }
 
 function validPropertyRequest(context, messageData) {
@@ -153,23 +172,7 @@ function handleResponse(context, messageData) {
     delete messagesSent[id];
 }
 
-function sendSynAck(context) {
-    console.log('sending syn ack');
-    const message = {
-        id: 0,
-        requestType: RequestType.synAck,
-    };
-    sendMessage(context, message);
-    context.lastAckSent = 0;
-}
-
-function handleSyn(context) {
-    console.log('handleSyn');
-    sendSynAck(context);
-}
-
 function sendAck(context, remoteId) {
-    console.log('sending ack');
     const message = {
         id: remoteId,
         requestType: RequestType.ack,
@@ -178,29 +181,32 @@ function sendAck(context, remoteId) {
     context.lastAckSent = remoteId;
 }
 
-function handleSynAck(context) {
-    console.log('handle syn ack');
-    context.lastAckReceived = 0;
-    sendAck(context, 0); // TODO: replace 0 with real id
-}
-
 function handleMessage(context, event) {
     const messageData = getMessageDataFromEvent(event);
     if (!messageData)
         return;
-    const { requestType } = messageData;
+    const { requestType, id } = messageData;
+    const { lastAckSent } = context;
+    if (requestType !== RequestType.ack) {
+        // ignore messages that have already been acknowledged
+        // this cleans up the handshake process a bit
+        if (id === lastAckSent) {
+            return;
+        }
+        const expectedId = typeof lastAckSent !== 'number' ? 0 : lastAckSent + 1;
+        if (id !== expectedId) {
+            return sendAck(context, lastAckSent !== null && lastAckSent !== void 0 ? lastAckSent : 0);
+        }
+        sendAck(context, id);
+    }
     switch (requestType) {
+        case RequestType.ack:
+            return handleAck(context, messageData);
         case RequestType.response:
             return handleResponse(context, messageData);
         case RequestType.property:
         case RequestType.function:
             return handleRequest(context, messageData);
-        case RequestType.syn:
-            return handleSyn(context);
-        case RequestType.synAck:
-            return handleSynAck(context);
-        case RequestType.ack:
-            return handleAck(context, messageData);
     }
 }
 function getMessageDataFromEvent(event) {
@@ -230,7 +236,8 @@ function getMessageDataFromEvent(event) {
     return messageData;
 }
 
-function storeMessageState(context, id, request) {
+function storeMessageState(context, request) {
+    const { id } = request;
     const { messagesSent } = context;
     messagesSent[id] = {
         acknowledged: false,
@@ -249,22 +256,22 @@ function storeMessageState(context, id, request) {
     return state;
 }
 function sendRequest(context, requestType, property, args = []) {
+    // TODO: if handshake not complete, queue message
     var _a;
-    const id = (_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0 + 1;
+    const id = ((_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0) + 1;
     const requestData = {
         id,
         requestType,
         property,
         args,
     };
-    const state = storeMessageState(context, id, requestData);
+    const state = storeMessageState(context, requestData);
     sendMessage(context, requestData);
     return state;
 }
 
 function sendSyn(context) {
     context.lastMessageSent = 0;
-    console.log('sending syn');
     const message = {
         id: 0,
         requestType: RequestType.syn,
@@ -293,10 +300,10 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
 }
 function sendSynMessages(context) {
     const interval = setInterval(() => {
-        const receivedAck = context.lastAckReceived !== undefined;
-        const sentAck = context.lastAckSent !== undefined;
-        if (receivedAck || sentAck) {
-            return clearInterval(interval);
+        const { lastAckReceived } = context;
+        if (typeof lastAckReceived === 'number') {
+            clearInterval(interval);
+            return; // TODO: send queued messages
         }
         sendSyn(context);
     }, 100);

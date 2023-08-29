@@ -4,7 +4,6 @@ import { Context } from '../types'
 
 export default function sendSyn(context: Context) {
 	context.lastMessageSent = 0
-	console.log('sending syn')
 
 	const message = {
 		id: 0,
