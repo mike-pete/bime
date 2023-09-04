@@ -31,9 +31,9 @@ function cleanupHandledMessage(context, id) {
     delete messagesSent[id];
 }
 
-function handleAck(context, messageData) {
-    const { id } = messageData;
-    const { messagesSent } = context;
+function handleAck(context, message) {
+    const { id } = message;
+    const { messagesSent, lastAckReceived } = context;
     const isSyn = id === 0;
     if (!isSyn) {
         if (!messageExists(context, id)) {
@@ -45,7 +45,9 @@ function handleAck(context, messageData) {
             cleanupHandledMessage(context, id);
         }
     }
-    context.lastAckReceived = id;
+    if (id === lastAckReceived + 1) {
+        context.lastAckReceived += 1;
+    }
 }
 function messageExists(context, id) {
     const { messagesSent, devMode } = context;
@@ -183,14 +185,19 @@ function handleRequest(context, messageData) {
     });
 }
 
-function handleResponse(context, messageData) {
+function handleResponse(context, response) {
     const { messagesSent, devMode } = context;
-    const { requestId, data, error } = messageData;
-    const { reject, resolve, state } = messagesSent[requestId];
+    const { requestId, data, error } = response;
+    const { reject, resolve, state, acknowledged } = messagesSent[requestId];
     if (!(requestId in messagesSent)) {
         devMode &&
             bimeLogWarning(`Response received for unknown message. This response may be for another instance of bime.`);
         return;
+    }
+    if (acknowledged === false) {
+        bimeLogError(`Response received before message was acknowledged.`);
+        // pretend there was an ack
+        handleAck(context, { id: requestId, requestType: RequestType.ack });
     }
     if (error) {
         if (reject && typeof reject === 'function') {
@@ -212,6 +219,7 @@ function handleResponse(context, messageData) {
         state.loading = false;
         state.error = error;
     }
+    // TODO: handle edge case where state should exist but doesn't
     cleanupHandledMessage(context, requestId);
 }
 
@@ -305,8 +313,9 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
     const context = {
         target,
         model,
+        // TODO: these should not be directly accessible, they should be accessed through getters and incrementors
         lastMessageSent: undefined,
-        lastAckReceived: undefined,
+        lastAckReceived: -1,
         lastAckSent: undefined,
         messagesSent,
         targetOrigin,
@@ -322,7 +331,8 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
 function sendSynMessages(context) {
     const interval = setInterval(() => {
         const { lastAckReceived } = context;
-        if (typeof lastAckReceived === 'number') {
+        const synWasAcknowledged = lastAckReceived === 0;
+        if (synWasAcknowledged) {
             clearInterval(interval);
             return; // TODO: send queued messages
         }

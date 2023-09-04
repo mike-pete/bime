@@ -20,7 +20,7 @@ export type Context = {
 	target: Window
 	model: Model
 	lastMessageSent?: number
-	lastAckReceived?: number
+	lastAckReceived: number
 	lastAckSent?: number
 	messagesSent: Record<number, MessageSentRecord>
 	targetOrigin: string

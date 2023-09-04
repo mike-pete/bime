@@ -1,13 +1,15 @@
+import { RequestType } from '../enums'
 import { Context, ResponseMessage } from '../types'
 import { bimeLogError, bimeLogWarning, cleanupHandledMessage } from '../utils'
+import handleAck from './handleAck'
 
 export default function handleResponse(
 	context: Context,
-	messageData: ResponseMessage
+	response: ResponseMessage
 ) {
 	const { messagesSent, devMode } = context
-	const { requestId, data, error } = messageData
-	const { reject, resolve, state } = messagesSent[requestId]
+	const { requestId, data, error } = response
+	const { reject, resolve, state, acknowledged } = messagesSent[requestId]
 
 	if (!(requestId in messagesSent)) {
 		devMode &&
@@ -15,6 +17,13 @@ export default function handleResponse(
 				`Response received for unknown message. This response may be for another instance of bime.`
 			)
 		return
+	}
+
+	if (acknowledged === false) {
+		bimeLogError(`Response received before message was acknowledged.`)
+
+		// pretend there was an ack
+		handleAck(context, { id: requestId, requestType: RequestType.ack })
 	}
 
 	if (error) {
@@ -35,6 +44,8 @@ export default function handleResponse(
 		state.loading = false
 		state.error = error
 	}
+
+	// TODO: handle edge case where state should exist but doesn't
 
 	cleanupHandledMessage(context, requestId)
 }

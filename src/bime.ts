@@ -15,8 +15,9 @@ function bime(
 	const context: Context = {
 		target,
 		model,
+		// TODO: these should not be directly accessible, they should be accessed through getters and incrementors
 		lastMessageSent: undefined, // number of messages sent
-		lastAckReceived: undefined, // last message that was acknowledged by remote
+		lastAckReceived: -1, // last message that was acknowledged by remote
 		lastAckSent: undefined, // last message that we acknowledged
 		messagesSent, // store of sent messages that haven't been resolved
 		targetOrigin,
@@ -35,8 +36,9 @@ function bime(
 function sendSynMessages(context: Context) {
 	const interval = setInterval(() => {
 		const { lastAckReceived } = context
-
-		if (typeof lastAckReceived === 'number') {
+		const synWasAcknowledged = lastAckReceived === 0
+		
+		if (synWasAcknowledged) {
 			clearInterval(interval)
 			return // TODO: send queued messages
 		}

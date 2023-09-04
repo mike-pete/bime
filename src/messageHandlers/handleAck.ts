@@ -4,10 +4,10 @@ import { bimeLogWarning, cleanupHandledMessage } from '../utils'
 
 export default function handleAck(
 	context: Context,
-	messageData: MessageIdentifier
+	message: MessageIdentifier
 ) {
-	const { id } = messageData
-	const { messagesSent } = context
+	const { id } = message
+	const { messagesSent, lastAckReceived } = context
 
 	const isSyn = id === 0
 	if (!isSyn) {
@@ -22,7 +22,11 @@ export default function handleAck(
 		}
 	}
 
-	context.lastAckReceived = id
+	if (id === lastAckReceived + 1) {
+		context.lastAckReceived += 1
+	} else {
+		// TODO: resend all messages after the lastAckReceived (or 0 whatever is greater)
+	}
 }
 
 function messageExists(context: Context, id: number) {
