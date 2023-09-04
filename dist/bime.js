@@ -18,8 +18,12 @@ function bimeLogImpossibility(message) {
     console.error(`BIME LEVEL ERROR: ${message}`);
 }
 function getNextMessageId(context) {
-    var _a;
-    return ((_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0) + 1;
+    const { lastMessageSent } = context;
+    // zero is reserved for the syn message
+    if (lastMessageSent === -1) {
+        return 1;
+    }
+    return lastMessageSent + 1;
 }
 function messageIsRequest({ requestType }) {
     return (requestType === RequestType.function || requestType === RequestType.property);
@@ -301,7 +305,6 @@ function sendRequest(context, requestType, property, args = []) {
 }
 
 function sendSyn(context) {
-    context.lastMessageSent = 0;
     const message = {
         id: 0,
         requestType: RequestType.syn,
@@ -315,7 +318,7 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
         target,
         model,
         // TODO: these should not be directly accessible, they should be accessed through getters and incrementors
-        lastMessageSent: undefined,
+        lastMessageSent: -1,
         lastAckReceived: -1,
         lastAckSent: -1,
         messagesSent,

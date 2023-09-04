@@ -15,7 +15,13 @@ export function bimeLogImpossibility(message: string) {
 }
 
 export function getNextMessageId(context: Context) {
-	return (context.lastMessageSent ?? 0) + 1
+	const { lastMessageSent } = context
+
+	// zero is reserved for the syn message
+	if (lastMessageSent === -1){
+		return 1
+	}
+	return lastMessageSent + 1
 }
 
 export function messageIsRequest({ requestType }: MessageIdentifier) {

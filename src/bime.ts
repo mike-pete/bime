@@ -16,7 +16,7 @@ function bime(
 		target,
 		model,
 		// TODO: these should not be directly accessible, they should be accessed through getters and incrementors
-		lastMessageSent: undefined, // number of messages sent
+		lastMessageSent: -1, // number of messages sent
 		lastAckReceived: -1, // last message that was acknowledged by remote
 		lastAckSent: -1, // last message that we acknowledged
 		messagesSent, // store of sent messages that haven't been resolved

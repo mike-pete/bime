@@ -19,7 +19,7 @@ export type Model = Record<string, ModelItem>
 export type Context = {
 	target: Window
 	model: Model
-	lastMessageSent?: number
+	lastMessageSent: number
 	lastAckReceived: number
 	lastAckSent: number
 	messagesSent: Record<number, MessageSentRecord>
