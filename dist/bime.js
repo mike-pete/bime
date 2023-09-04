@@ -14,7 +14,7 @@ bimeThrowError.prototype = Error.prototype;
 function bimeLogWarning(message) {
     console.warn(`bime: ${message}`);
 }
-function bimeLogError(message) {
+function bimeLogImpossibility(message) {
     console.error(`BIME LEVEL ERROR: ${message}`);
 }
 function getNextMessageId(context) {
@@ -195,7 +195,7 @@ function handleResponse(context, response) {
         return;
     }
     if (acknowledged === false) {
-        bimeLogError(`Response received before message was acknowledged.`);
+        bimeLogImpossibility(`Response received before message was acknowledged.`);
         // pretend there was an ack
         handleAck(context, { id: requestId, requestType: RequestType.ack });
     }
@@ -204,7 +204,7 @@ function handleResponse(context, response) {
             reject(error);
         }
         else {
-            bimeLogError(`attempted to reject promise but reject was [${reject}]`);
+            bimeLogImpossibility(`attempted to reject promise but reject was [${reject}]`);
         }
     }
     else {
@@ -212,7 +212,7 @@ function handleResponse(context, response) {
             resolve(data);
         }
         else {
-            bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`);
+            bimeLogImpossibility(`attempted to resolve promise but resolve was [${resolve}]`);
         }
     }
     if (state) {

@@ -1,6 +1,10 @@
 import { RequestType } from '../enums'
 import { Context, ResponseMessage } from '../types'
-import { bimeLogError, bimeLogWarning, cleanupHandledMessage } from '../utils'
+import {
+	bimeLogImpossibility,
+	bimeLogWarning,
+	cleanupHandledMessage,
+} from '../utils'
 import handleAck from './handleAck'
 
 export default function handleResponse(
@@ -20,7 +24,7 @@ export default function handleResponse(
 	}
 
 	if (acknowledged === false) {
-		bimeLogError(`Response received before message was acknowledged.`)
+		bimeLogImpossibility(`Response received before message was acknowledged.`)
 
 		// pretend there was an ack
 		handleAck(context, { id: requestId, requestType: RequestType.ack })
@@ -30,13 +34,17 @@ export default function handleResponse(
 		if (reject && typeof reject === 'function') {
 			reject(error)
 		} else {
-			bimeLogError(`attempted to reject promise but reject was [${reject}]`)
+			bimeLogImpossibility(
+				`attempted to reject promise but reject was [${reject}]`
+			)
 		}
 	} else {
 		if (resolve && typeof resolve === 'function') {
 			resolve(data)
 		} else {
-			bimeLogError(`attempted to resolve promise but resolve was [${resolve}]`)
+			bimeLogImpossibility(
+				`attempted to resolve promise but resolve was [${resolve}]`
+			)
 		}
 	}
 

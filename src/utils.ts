@@ -10,7 +10,7 @@ export function bimeLogWarning(message: string) {
 	console.warn(`bime: ${message}`)
 }
 
-export function bimeLogError(message: string) {
+export function bimeLogImpossibility(message: string) {
 	console.error(`BIME LEVEL ERROR: ${message}`)
 }
 
