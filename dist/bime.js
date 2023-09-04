@@ -229,6 +229,7 @@ function sendAck(context, remoteId) {
         requestType: RequestType.ack,
     };
     sendMessage(context, message);
+    // TODO: make sure this is always incrementing, there may be a check for this somewhere else in the codebase
     context.lastAckSent = remoteId;
 }
 
@@ -244,9 +245,9 @@ function handleMessage(context, event) {
         if (id === lastAckSent) {
             return;
         }
-        const expectedId = typeof lastAckSent !== 'number' ? 0 : lastAckSent + 1;
+        const expectedId = lastAckSent + 1;
         if (id !== expectedId) {
-            return sendAck(context, lastAckSent !== null && lastAckSent !== void 0 ? lastAckSent : 0);
+            return sendAck(context, lastAckSent);
         }
         sendAck(context, id);
     }
@@ -316,7 +317,7 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
         // TODO: these should not be directly accessible, they should be accessed through getters and incrementors
         lastMessageSent: undefined,
         lastAckReceived: -1,
-        lastAckSent: undefined,
+        lastAckSent: -1,
         messagesSent,
         targetOrigin,
         devMode,

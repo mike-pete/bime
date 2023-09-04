@@ -26,9 +26,9 @@ export default function handleMessage(context: Context, event: MessageEvent) {
 			return
 		}
 
-		const expectedId = typeof lastAckSent !== 'number' ? 0 : lastAckSent + 1
+		const expectedId = lastAckSent + 1
 		if (id !== expectedId) {
-			return sendAck(context, lastAckSent ?? 0)
+			return sendAck(context, lastAckSent)
 		}
 		sendAck(context, id)
 	}

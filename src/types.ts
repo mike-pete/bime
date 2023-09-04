@@ -21,7 +21,7 @@ export type Context = {
 	model: Model
 	lastMessageSent?: number
 	lastAckReceived: number
-	lastAckSent?: number
+	lastAckSent: number
 	messagesSent: Record<number, MessageSentRecord>
 	targetOrigin: string
 	devMode: boolean

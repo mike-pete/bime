@@ -9,5 +9,7 @@ export default function sendAck(context: Context, remoteId: number) {
 	}
 
 	sendMessage(context, message)
+
+	// TODO: make sure this is always incrementing, there may be a check for this somewhere else in the codebase
 	context.lastAckSent = remoteId
 }
