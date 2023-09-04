@@ -1,31 +1,8 @@
 import { RequestType } from '../enums'
+import saveMessageSent from '../saveMessageState'
 import { sendMessage } from '../sendMessage'
-import { Context, ModelProperty, RequestMessage, State } from '../types'
-
-function storeMessageState(context: Context, request: RequestMessage) {
-	const { id } = request
-	const { messagesSent } = context
-
-	messagesSent[id] = {
-		acknowledged: false,
-		request,
-	}
-
-	const data: Promise<ModelProperty> = new Promise((resolve, reject) => {
-		messagesSent[id].resolve = resolve
-		messagesSent[id].reject = reject
-	})
-
-	const state: State = {
-		loading: true,
-		data,
-		error: undefined,
-	}
-
-	messagesSent[id].state = state
-
-	return state
-}
+import { Context, ModelProperty, RequestMessage } from '../types'
+import { getNextMessageId } from '../utils'
 
 export default function sendRequest(
 	context: Context,
@@ -35,15 +12,15 @@ export default function sendRequest(
 ) {
 	// TODO: if handshake not complete, queue message
 
-	const id = (context.lastMessageSent ?? 0) + 1
-	const requestData: RequestMessage = {
+	const id = getNextMessageId(context)
+	const request: RequestMessage = {
 		id,
 		requestType,
 		property,
 		args,
 	}
 
-	const state = storeMessageState(context, requestData)
-	sendMessage(context, requestData)
+	const state = saveMessageSent(context, request)
+	sendMessage(context, request)
 	return state
 }

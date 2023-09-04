@@ -48,7 +48,7 @@ export default async function handleRequest(
 	messageData: RequestMessage
 ) {
 	const { model } = context
-	const { property, args, id } = messageData
+	const { property, args, id:requestId } = messageData
 
 	const { valid, error: propertyError } = validPropertyRequest(
 		context,
@@ -71,5 +71,5 @@ export default async function handleRequest(
 	// TODO
 	let error
 
-	sendResponse(context, id, response, error)
+	sendResponse(context, requestId, response, error)
 }

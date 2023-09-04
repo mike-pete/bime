@@ -1,5 +1,6 @@
+import { RequestType } from '../enums'
 import { Context, MessageIdentifier } from '../types'
-import { bimeLogWarning } from '../utils'
+import { bimeLogWarning, cleanupHandledMessage } from '../utils'
 
 export default function handleAck(
 	context: Context,
@@ -14,6 +15,11 @@ export default function handleAck(
 			return
 		}
 		messagesSent[id].acknowledged = true
+		const acknowledgedMessageWasResponse =
+			messagesSent[id].message.requestType === RequestType.response
+		if (acknowledgedMessageWasResponse) {
+			cleanupHandledMessage(context, id)
+		}
 	}
 
 	context.lastAckReceived = id

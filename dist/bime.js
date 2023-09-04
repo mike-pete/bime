@@ -17,6 +17,19 @@ function bimeLogWarning(message) {
 function bimeLogError(message) {
     console.error(`BIME LEVEL ERROR: ${message}`);
 }
+function getNextMessageId(context) {
+    var _a;
+    return ((_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0) + 1;
+}
+function messageIsRequest({ requestType }) {
+    return (requestType === RequestType.function || requestType === RequestType.property);
+}
+function cleanupHandledMessage(context, id) {
+    const { messagesSent } = context;
+    // it should be safe to remove the message from the messagesSent store
+    // because the application should be maintaining a reference to the state object
+    delete messagesSent[id];
+}
 
 function handleAck(context, messageData) {
     const { id } = messageData;
@@ -27,6 +40,10 @@ function handleAck(context, messageData) {
             return;
         }
         messagesSent[id].acknowledged = true;
+        const acknowledgedMessageWasResponse = messagesSent[id].message.requestType === RequestType.response;
+        if (acknowledgedMessageWasResponse) {
+            cleanupHandledMessage(context, id);
+        }
     }
     context.lastAckReceived = id;
 }
@@ -72,6 +89,32 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
+function saveMessageSent(context, message) {
+    const { id } = message;
+    const { messagesSent } = context;
+    messagesSent[id] = {
+        acknowledged: false,
+        message,
+    };
+    if (messageIsRequest(message)) {
+        return saveRequestState(context, id);
+    }
+}
+function saveRequestState(context, id) {
+    const { messagesSent } = context;
+    const data = new Promise((resolve, reject) => {
+        messagesSent[id].resolve = resolve;
+        messagesSent[id].reject = reject;
+    });
+    const state = {
+        loading: true,
+        data,
+        error: undefined,
+    };
+    messagesSent[id].state = state;
+    return state;
+}
+
 function sendMessage(context, message) {
     // TODO: if message id is > lastMessageSent + 1, add to queue
     const { target, targetOrigin } = context;
@@ -81,13 +124,15 @@ function sendMessage(context, message) {
     }
 }
 
-function sendResponse(context, id, data, error) {
+function sendResponse(context, requestId, data, error) {
     const response = {
-        id,
+        id: getNextMessageId(context),
+        requestId,
         requestType: RequestType.response,
         data,
         error,
     };
+    saveMessageSent(context, response);
     sendMessage(context, response);
 }
 
@@ -119,7 +164,7 @@ function validPropertyRequest(context, messageData) {
 function handleRequest(context, messageData) {
     return __awaiter(this, void 0, void 0, function* () {
         const { model } = context;
-        const { property, args, id } = messageData;
+        const { property, args, id: requestId } = messageData;
         const { valid, error: propertyError } = validPropertyRequest(context, messageData);
         if (!valid) {
             bimeThrowError(propertyError !== null && propertyError !== void 0 ? propertyError : 'something went wrong');
@@ -134,15 +179,15 @@ function handleRequest(context, messageData) {
         }
         // TODO
         let error;
-        sendResponse(context, id, response, error);
+        sendResponse(context, requestId, response, error);
     });
 }
 
 function handleResponse(context, messageData) {
     const { messagesSent, devMode } = context;
-    const { id, data, error } = messageData;
-    const { reject, resolve, state } = messagesSent[id];
-    if (!(id in messagesSent)) {
+    const { requestId, data, error } = messageData;
+    const { reject, resolve, state } = messagesSent[requestId];
+    if (!(requestId in messagesSent)) {
         devMode &&
             bimeLogWarning(`Response received for unknown message. This response may be for another instance of bime.`);
         return;
@@ -167,9 +212,7 @@ function handleResponse(context, messageData) {
         state.loading = false;
         state.error = error;
     }
-    // it should be safe to remove the message from the messagesSent store
-    // because the application should be maintaining a reference to the state object
-    delete messagesSent[id];
+    cleanupHandledMessage(context, requestId);
 }
 
 function sendAck(context, remoteId) {
@@ -227,46 +270,24 @@ function getMessageDataFromEvent(event) {
         // ignore messages that don't have an id, they're not relevant to bime
         return;
     }
-    const { requestType } = messageData;
-    const messageIsRequest = requestType === RequestType.property || requestType === RequestType.function;
-    if (messageIsRequest && !('property' in messageData)) {
+    if (messageIsRequest(messageData) && !('property' in messageData)) {
         bimeLogWarning(`A request was made, but no property or function was provided.`);
         return;
     }
     return messageData;
 }
 
-function storeMessageState(context, request) {
-    const { id } = request;
-    const { messagesSent } = context;
-    messagesSent[id] = {
-        acknowledged: false,
-        request,
-    };
-    const data = new Promise((resolve, reject) => {
-        messagesSent[id].resolve = resolve;
-        messagesSent[id].reject = reject;
-    });
-    const state = {
-        loading: true,
-        data,
-        error: undefined,
-    };
-    messagesSent[id].state = state;
-    return state;
-}
 function sendRequest(context, requestType, property, args = []) {
     // TODO: if handshake not complete, queue message
-    var _a;
-    const id = ((_a = context.lastMessageSent) !== null && _a !== void 0 ? _a : 0) + 1;
-    const requestData = {
+    const id = getNextMessageId(context);
+    const request = {
         id,
         requestType,
         property,
         args,
     };
-    const state = storeMessageState(context, requestData);
-    sendMessage(context, requestData);
+    const state = saveMessageSent(context, request);
+    sendMessage(context, request);
     return state;
 }
 

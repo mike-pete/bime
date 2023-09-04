@@ -1,15 +1,15 @@
 - Handshake
 
-  - Save responses in sent message store
+  - In theory you should always get an ack back before a response, but if you don't, you should still handle the response and mark the message as acknowledged (and update the lastAckReceived) (also log a warning, this should never happen)
   - Create a optional config object for handshake variables (timeout, max retries, etc)
   - Auto retry and then timeout if no ack received (same with syn ack)
-  - In theory you should always get an ack back before a response, but if you don't, you should still handle the response and mark the message as acknowledged (and update the lastAckReceived) (also log a warning, this should never happen)
   - If the incoming ack ID === the ID of the lastAckReceived, you have to resend the messages after that ID
   - After the handshake has been established, send all the messages that have been queued up
   - Don't send messages before the handshake has been established
   - Factor in Number.MAX_VALUE for handshake sequence
   - Add a uuid for the communication connection between the two windows, this will allow for multiple connections between the same two windows
-  - make a note somewhere on how the handshake works (using IDs as a sequence number, sequence numbers are based on message count, ack doesn't increment sequence number, etc.)
+  - Allow multiple targets and multiple targetOrigins
+  - Make a note somewhere on how the handshake works (using IDs as a sequence number, sequence numbers are based on message count, ack doesn't increment sequence number, etc.)
 
 - add warning about the dangers of using "*" as targetOrigin
 - expose a listener killer/cleanup function

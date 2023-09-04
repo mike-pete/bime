@@ -10,7 +10,7 @@ import type {
 	ResponseMessage,
 	ValidMessageData,
 } from './types'
-import { bimeLogWarning } from './utils'
+import { bimeLogWarning, messageIsRequest } from './utils'
 
 export default function handleMessage(context: Context, event: MessageEvent) {
 	const messageData = getMessageDataFromEvent(event)
@@ -68,11 +68,7 @@ function getMessageDataFromEvent(
 		return
 	}
 
-	const { requestType } = messageData
-	const messageIsRequest =
-		requestType === RequestType.property || requestType === RequestType.function
-
-	if (messageIsRequest && !('property' in messageData)) {
+	if (messageIsRequest(messageData) && !('property' in messageData)) {
 		bimeLogWarning(
 			`A request was made, but no property or function was provided.`
 		)

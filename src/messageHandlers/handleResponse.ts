@@ -1,15 +1,15 @@
 import { Context, ResponseMessage } from '../types'
-import { bimeLogError, bimeLogWarning } from '../utils'
+import { bimeLogError, bimeLogWarning, cleanupHandledMessage } from '../utils'
 
 export default function handleResponse(
 	context: Context,
 	messageData: ResponseMessage
 ) {
 	const { messagesSent, devMode } = context
-	const { id, data, error } = messageData
-	const { reject, resolve, state } = messagesSent[id]
+	const { requestId, data, error } = messageData
+	const { reject, resolve, state } = messagesSent[requestId]
 
-	if (!(id in messagesSent)) {
+	if (!(requestId in messagesSent)) {
 		devMode &&
 			bimeLogWarning(
 				`Response received for unknown message. This response may be for another instance of bime.`
@@ -36,7 +36,5 @@ export default function handleResponse(
 		state.error = error
 	}
 
-	// it should be safe to remove the message from the messagesSent store
-	// because the application should be maintaining a reference to the state object
-	delete messagesSent[id]
+	cleanupHandledMessage(context, requestId)
 }

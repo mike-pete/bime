@@ -9,7 +9,7 @@ export type State = {
 export type MessageSentRecord = {
 	state?: State
 	acknowledged: boolean
-	request: RequestMessage
+	message: RequestMessage | ResponseMessage
 	resolve?: (value: ModelProperty) => void
 	reject?: (reason?: string) => void
 }
@@ -22,7 +22,7 @@ export type Context = {
 	lastMessageSent?: number
 	lastAckReceived?: number
 	lastAckSent?: number
-	messagesSent: Record<string, MessageSentRecord>
+	messagesSent: Record<number, MessageSentRecord>
 	targetOrigin: string
 	devMode: boolean
 }
@@ -40,6 +40,7 @@ export type RequestMessage = MessageIdentifier & {
 
 export type ResponseMessage = MessageIdentifier & {
 	requestType: RequestType.response
+	requestId: number
 	data?: ModelProperty
 	error?: string
 }
@@ -51,6 +52,8 @@ export type ValidMessageData =
 
 type BaseTypes = string | number | boolean | null | undefined
 
+
+// TODO: rename this
 export type ModelProperty =
 	| BaseTypes
 	| BaseTypes[]
