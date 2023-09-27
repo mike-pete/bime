@@ -334,7 +334,6 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
     return {
         get: getProperty.bind(null, context),
         invoke: invokeMethod.bind(null, context),
-        hello: () => console.log('hello')
     };
 }
 function sendSynMessages(context) {
@@ -345,7 +344,6 @@ function sendSynMessages(context) {
             clearInterval(interval);
             return; // TODO: send queued messages
         }
-        console.log('sending syn');
         sendSyn(context);
     }, 200);
 }
