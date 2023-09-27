@@ -13,7 +13,13 @@ export default function handleResponse(
 ) {
 	const { messagesSent, devMode } = context
 	const { requestId, data, error } = response
-	const { reject, resolve, state, acknowledged } = messagesSent[requestId]
+
+	if (!(requestId in messagesSent)) {
+		// ignore responses for messages that we didn't send
+		return
+	}
+
+	const { resolve, reject, state, acknowledged } = messagesSent[requestId]
 
 	if (!(requestId in messagesSent)) {
 		devMode &&

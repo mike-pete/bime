@@ -37,14 +37,13 @@ function sendSynMessages(context: Context) {
 	const interval = setInterval(() => {
 		const { lastAckReceived } = context
 		const synWasAcknowledged = lastAckReceived === 0
-		
 		if (synWasAcknowledged) {
 			clearInterval(interval)
 			return // TODO: send queued messages
 		}
 
 		sendSyn(context)
-	}, 100)
+	}, 200)
 }
 
 function messageListener(context: Context, event: MessageEvent) {

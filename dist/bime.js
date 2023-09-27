@@ -192,7 +192,11 @@ function handleRequest(context, messageData) {
 function handleResponse(context, response) {
     const { messagesSent, devMode } = context;
     const { requestId, data, error } = response;
-    const { reject, resolve, state, acknowledged } = messagesSent[requestId];
+    if (!(requestId in messagesSent)) {
+        // ignore responses for messages that we didn't send
+        return;
+    }
+    const { resolve, reject, state, acknowledged } = messagesSent[requestId];
     if (!(requestId in messagesSent)) {
         devMode &&
             bimeLogWarning(`Response received for unknown message. This response may be for another instance of bime.`);
@@ -330,6 +334,7 @@ function bime(target, model = {}, targetOrigin, devMode = false) {
     return {
         get: getProperty.bind(null, context),
         invoke: invokeMethod.bind(null, context),
+        hello: () => console.log('hello')
     };
 }
 function sendSynMessages(context) {
@@ -340,8 +345,9 @@ function sendSynMessages(context) {
             clearInterval(interval);
             return; // TODO: send queued messages
         }
+        console.log('sending syn');
         sendSyn(context);
-    }, 100);
+    }, 200);
 }
 function messageListener(context, event) {
     if (originIsValid(context, event)) {
