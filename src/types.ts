@@ -1,4 +1,5 @@
 import { RequestType } from './enums'
+import { ExposedPromise } from './utils'
 
 export type State = {
 	loading: boolean
@@ -19,16 +20,14 @@ export type Model = Record<string, ModelItem>
 export type Context = {
 	target: Window
 	model: Model
-	lastMessageSent: number
-	lastAckReceived: number
-	lastAckSent: number
-	messagesSent: Record<number, MessageSentRecord>
+	messagesSent: Record<string, MessageSentRecord>
+	isConnected: ExposedPromise<void>
 	targetOrigin: string
 	devMode: boolean
 }
 
 export type MessageIdentifier = {
-	id: number
+	id: string
 	requestType: RequestType
 }
 

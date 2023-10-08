@@ -1,18 +1,23 @@
-import type {
-	Context,
-	MessageIdentifier,
-	RequestMessage,
-	ResponseMessage,
-} from './types'
+import type { Context, MessageIdentifier, RequestMessage, ResponseMessage } from './types'
+import { messageIsRequest } from './utils'
 
 export function sendMessage(
 	context: Context,
 	message: MessageIdentifier | RequestMessage | ResponseMessage
 ) {
-	// TODO: if message id is > lastMessageSent + 1, add to queue
+	if (messageIsRequest(message)) {
+		context.isConnected.promise.then(() => {
+			sendPostMessage(context, message)
+		})
+	} else {
+		sendPostMessage(context, message)
+	}
+}
+
+function sendPostMessage(
+	context: Context,
+	message: MessageIdentifier | RequestMessage | ResponseMessage
+) {
 	const { target, targetOrigin } = context
 	target.postMessage(JSON.stringify(message), targetOrigin)
-	if (message.requestType !== 'ack'){
-		context.lastMessageSent = message.id
-	}
 }

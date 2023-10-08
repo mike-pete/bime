@@ -3,23 +3,15 @@ import handleMessage from './handleMessage'
 import sendRequest from './messageSenders/sendRequest'
 import sendSyn from './messageSenders/sendSyn'
 import type { Context, MessageSentRecord, Model, ModelProperty } from './types'
-import { bimeLogWarning } from './utils'
+import { bimeLogWarning, exposedPromiseFactory } from './utils'
 
-function bime(
-	target: Window,
-	model: Model = {},
-	targetOrigin: string,
-	devMode = false
-) {
+function bime(target: Window, model: Model = {}, targetOrigin: string, devMode = false) {
 	const messagesSent: Record<string, MessageSentRecord> = {}
 	const context: Context = {
 		target,
 		model,
-		// TODO: these should not be directly accessible, they should be accessed through getters and incrementors
-		lastMessageSent: -1, // number of messages sent
-		lastAckReceived: -1, // last message that was acknowledged by remote
-		lastAckSent: -1, // last message that we acknowledged
 		messagesSent, // store of sent messages that haven't been resolved
+		isConnected: exposedPromiseFactory<void>(),
 		targetOrigin,
 		devMode,
 	}
@@ -35,15 +27,12 @@ function bime(
 
 function sendSynMessages(context: Context) {
 	const interval = setInterval(() => {
-		const { lastAckReceived } = context
-		const synWasAcknowledged = lastAckReceived === 0
-		if (synWasAcknowledged) {
-			clearInterval(interval)
-			return // TODO: send queued messages
-		}
-
+		console.log('send syn')
 		sendSyn(context)
-	}, 200)
+	}, 300)
+	context.isConnected.promise.then(() => {
+		clearInterval(interval)
+	})
 }
 
 function messageListener(context: Context, event: MessageEvent) {
@@ -56,18 +45,11 @@ function getProperty(context: Context, property: string) {
 	return sendRequest(context, RequestType.property, property)
 }
 
-function invokeMethod(
-	context: Context,
-	property: string,
-	args: ModelProperty[]
-) {
+function invokeMethod(context: Context, property: string, args: ModelProperty[]) {
 	return sendRequest(context, RequestType.function, property, args)
 }
 
-function originIsValid(
-	{ targetOrigin, devMode }: Context,
-	{ origin }: MessageEvent
-): boolean {
+function originIsValid({ targetOrigin, devMode }: Context, { origin }: MessageEvent): boolean {
 	const originIsValid = targetOrigin === '*' || origin === targetOrigin
 
 	if (!originIsValid && devMode) {

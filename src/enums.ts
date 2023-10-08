@@ -5,3 +5,5 @@ export enum RequestType {
 	syn = 'syn',
 	ack = 'ack',
 }
+
+export const HandshakeSynId = 'sync'

@@ -2,7 +2,7 @@ import { RequestType } from '../enums'
 import saveMessageSent from '../saveMessageState'
 import { sendMessage } from '../sendMessage'
 import { Context, ModelProperty, ResponseMessage } from '../types'
-import { getNextMessageId } from '../utils'
+import { uid } from '../utils'
 
 export default function sendResponse(
 	context: Context,
@@ -11,7 +11,7 @@ export default function sendResponse(
 	error?: string
 ) {
 	const response: ResponseMessage = {
-		id: getNextMessageId(context),
+		id: uid(),
 		requestId,
 		requestType: RequestType.response,
 		data,

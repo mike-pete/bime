@@ -1,16 +1,15 @@
-import { RequestType } from '../enums'
+import { HandshakeSynId, RequestType } from '../enums'
 import { Context, MessageIdentifier } from '../types'
 import { bimeLogWarning, cleanupHandledMessage } from '../utils'
 
-export default function handleAck(
-	context: Context,
-	message: MessageIdentifier
-) {
+export default function handleAck(context: Context, message: MessageIdentifier) {
 	const { id } = message
-	const { messagesSent, lastAckReceived } = context
+	const { messagesSent } = context
+	const isSyn = id === HandshakeSynId
 
-	const isSyn = id === 0
-	if (!isSyn) {
+	if (isSyn) {
+		context.isConnected.resolve()
+	} else {
 		if (!messageExists(context, id)) {
 			return
 		}
@@ -21,15 +20,9 @@ export default function handleAck(
 			cleanupHandledMessage(context, id)
 		}
 	}
-
-	if (id === lastAckReceived + 1) {
-		context.lastAckReceived += 1
-	} else {
-		// TODO: resend all messages after the lastAckReceived (or 0 whatever is greater)
-	}
 }
 
-function messageExists(context: Context, id: number) {
+function messageExists(context: Context, id: string) {
 	const { messagesSent, devMode } = context
 	if (!(id in messagesSent)) {
 		devMode &&

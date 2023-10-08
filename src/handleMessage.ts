@@ -17,19 +17,9 @@ export default function handleMessage(context: Context, event: MessageEvent) {
 	if (!messageData) return
 
 	const { requestType, id } = messageData
-	const { lastAckSent } = context
+
 
 	if (requestType !== RequestType.ack) {
-		// ignore messages that have already been acknowledged
-		// this cleans up the handshake process a bit
-		if (id === lastAckSent) {
-			return
-		}
-
-		const expectedId = lastAckSent + 1
-		if (id !== expectedId) {
-			return sendAck(context, lastAckSent)
-		}
 		sendAck(context, id)
 	}
 

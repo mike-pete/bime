@@ -2,7 +2,7 @@ import { RequestType } from '../enums'
 import saveMessageSent from '../saveMessageState'
 import { sendMessage } from '../sendMessage'
 import { Context, ModelProperty, RequestMessage } from '../types'
-import { getNextMessageId } from '../utils'
+import { uid } from '../utils'
 
 export default function sendRequest(
 	context: Context,
@@ -10,11 +10,8 @@ export default function sendRequest(
 	property: string,
 	args: ModelProperty[] = []
 ) {
-	// TODO: if handshake not complete, queue message
-
-	const id = getNextMessageId(context)
 	const request: RequestMessage = {
-		id,
+		id: uid(),
 		requestType,
 		property,
 		args,

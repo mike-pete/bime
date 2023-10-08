@@ -1,6 +1,9 @@
+We should automatically reject if we haven't received an ack within x amount of time
+We should remove loading and error from state and just return a promise
+We need a .d.ts file
+
 - Handshake
 
-  - Factor in Number.MAX_VALUE for handshake sequence
   - Allow multiple targets and multiple targetOrigins
   - Make a note somewhere on how the handshake works (using IDs as a sequence number, sequence numbers are based on message count, ack doesn't increment sequence number, etc.)
   - Create a optional config object for handshake variables (timeout, max retries, etc)

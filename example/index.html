@@ -12,6 +12,8 @@
 		<script type="module">
 			import bime from '../dist/bime.js'
 
+			let count = 0
+
 			const model = {
 				greet: () => {
 					console.log('greetings from index')
@@ -24,13 +26,18 @@
 			document
 				.getElementById('message_button')
 				.addEventListener('click', () => {
-					const x = bi.invoke('ping')
-					console.log('x0', x)
+					const x = bi.invoke('echo', [`hello ${count}`])
+					console.log('x0', x, count)
+					count++
 					x.data.then((r) => {
 						console.log('response', r)
 						console.log('x1', x)
 					})
 				})
+
+
+
+			
 		</script>
 	</body>
 </html>

@@ -19,10 +19,10 @@
 			}
 
 			const model = {
-				ping: async () => {
-					console.log('iframe: ping')
+				echo: async (toEcho) => {
+					console.log('iframe: echo', toEcho)
 					// bi.invoke('pong')
-					return await delayedResponse('ping response', 1000)
+					return await delayedResponse(toEcho, 500)
 				},
 			}
 

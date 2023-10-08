@@ -1,4 +1,4 @@
-{
+  {
 	"name": "@mike.pete/bime",
 	"version": "1.0.1",
 	"description": "Bidirectional postmessages made easy",
@@ -31,5 +31,8 @@
 		"@rollup/plugin-terser": "^0.4.3",
 		"@rollup/plugin-typescript": "^11.1.2",
 		"tslib": "^2.6.1"
+	},
+	"dependencies": {
+		"rollup": "^3.29.3"
 	}
 }
