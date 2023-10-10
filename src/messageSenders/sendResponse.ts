@@ -6,7 +6,7 @@ import { uid } from '../utils'
 
 export default function sendResponse(
 	context: Context,
-	requestId: number,
+	requestId: string,
 	data: ModelProperty,
 	error?: string
 ) {

@@ -24,7 +24,7 @@ export default function saveMessageSent(
 	}
 }
 
-function saveRequestState(context: Context, id: number) {
+function saveRequestState(context: Context, id: string) {
 	const { messagesSent } = context
 
 	const data: Promise<ModelProperty> = new Promise((resolve, reject) => {

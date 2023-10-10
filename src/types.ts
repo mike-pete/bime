@@ -39,7 +39,7 @@ export type RequestMessage = MessageIdentifier & {
 
 export type ResponseMessage = MessageIdentifier & {
 	requestType: RequestType.response
-	requestId: number
+	requestId: string
 	data?: ModelProperty
 	error?: string
 }
