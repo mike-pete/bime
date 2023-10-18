@@ -1,6 +1,6 @@
   {
 	"name": "@mike.pete/bime",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Bidirectional postmessages made easy",
 	"main": "./dist/bime.js",
 	"type": "module",
