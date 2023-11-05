@@ -17,7 +17,6 @@ export default function sendRequest(
 		args,
 	}
 
-	const state = saveMessageSent(context, request)
 	sendMessage(context, request)
-	return state
+	return saveMessageSent(context, request)
 }

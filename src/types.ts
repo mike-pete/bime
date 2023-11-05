@@ -1,14 +1,8 @@
 import { RequestType } from './enums'
 import { ExposedPromise } from './utils'
 
-export type State = {
-	loading: boolean
-	data: Promise<ModelProperty>
-	error?: string
-}
-
 export type MessageSentRecord = {
-	state?: State
+	state?: Promise<ModelProperty>
 	acknowledged: boolean
 	message: RequestMessage | ResponseMessage
 	resolve?: (value: ModelProperty) => void

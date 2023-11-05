@@ -19,7 +19,7 @@ export default function handleResponse(
 		return
 	}
 
-	const { resolve, reject, state, acknowledged } = messagesSent[requestId]
+	const { resolve, reject, acknowledged } = messagesSent[requestId]
 
 	if (!(requestId in messagesSent)) {
 		devMode &&
@@ -53,13 +53,6 @@ export default function handleResponse(
 			)
 		}
 	}
-
-	if (state) {
-		state.loading = false
-		state.error = error
-	}
-
-	// TODO: handle edge case where state should exist but doesn't
 
 	cleanupHandledMessage(context, requestId)
 }
