@@ -1,5 +1,4 @@
 We should automatically reject if we haven't received an ack within x amount of time
-We should remove loading and error from state and just return a promise
 We need a .d.ts file
 
 - Handshake
