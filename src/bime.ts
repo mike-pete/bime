@@ -1,22 +1,41 @@
 type Model = Record<string, (...args: any[]) => any>
 
+type MessageResponse<T> = {
+	[K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<R> : never
+}
+
 const bime = <T extends Model>(target: Window) => {
-	
-	const sendMessage = (message: string) => {
-		target.postMessage(message, '*')
+	const sendMessage = <T extends Model>(prop: string, args: Parameters<T[keyof T]>) => {
+		target.postMessage({ prop, args }, '*')
+		const { promise, resolve } = exposedPromiseFactory<ReturnType<T[keyof T]>>()
+		return promise
 	}
 
-	const handler: ProxyHandler<T> = {
-		get: (target: T, prop: string) => {
-			return (...args: Parameters<T[keyof T]>): ReturnType<T[keyof T]> => {
-				console.log('invoking', prop)
-				sendMessage(`prop:${prop}, target:${JSON.stringify(target)}, args:${JSON.stringify(args)}`)
-				return null
+	const handler: ProxyHandler<MessageResponse<T>> = {
+		get: (target: MessageResponse<T>, prop: string) => {
+			return (...args: Parameters<T[keyof T]>) => {
+				return sendMessage<T>(prop, args)
 			}
 		},
 	}
 
-	return new Proxy<T>({} as T, handler)
+	return new Proxy<MessageResponse<T>>({} as any, handler)
+}
+
+const exposedPromiseFactory = <T>() => {
+	let resolve: (arg0: T) => void
+	let reject: (arg0: T) => void
+
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res
+		reject = rej
+	})
+
+	return {
+		resolve: resolve!,
+		reject: reject!,
+		promise,
+	}
 }
 
 // type RemoteModelType = {
@@ -27,6 +46,6 @@ const bime = <T extends Model>(target: Window) => {
 
 // let bi = bime<RemoteModelType>(window)
 
-// bi.greet('Mike')
+// const response = bi.greet('Mike')
 
 export default bime

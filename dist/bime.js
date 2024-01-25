@@ -1,22 +1,35 @@
 const bime = (target) => {
-    const sendMessage = (message) => {
-        target.postMessage(message, '*');
+    const sendMessage = (prop, args) => {
+        target.postMessage({ prop, args }, '*');
+        const { promise, resolve } = exposedPromiseFactory();
+        return promise;
     };
     const handler = {
         get: (target, prop) => {
             return (...args) => {
-                console.log('invoking', prop);
-                sendMessage(`prop:${prop}, target:${JSON.stringify(target)}, args:${JSON.stringify(args)}`);
-                return null;
+                return sendMessage(prop, args);
             };
         },
     };
     return new Proxy({}, handler);
+};
+const exposedPromiseFactory = () => {
+    let resolve;
+    let reject;
+    const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return {
+        resolve: resolve,
+        reject: reject,
+        promise,
+    };
 };
 // type RemoteModelType = {
 // 	greet: (name: string) => string
 // }
 // const window = new Window()
 // let bi = bime<RemoteModelType>(window)
-// bi.greet('Mike')
+// const response = bi.greet('Mike')
 export default bime;
