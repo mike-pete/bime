@@ -4,6 +4,7 @@
 		"target": "es2019",
 		"declaration": true,
 		"outDir": "./dist",
+		"noImplicitAny": true
 	},
 	"include": ["src/**/*"]
 }
