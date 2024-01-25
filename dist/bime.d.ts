@@ -1,1 +1,2 @@
-export declare function sayHello(): void;
+declare const bime: () => void;
+export default bime;

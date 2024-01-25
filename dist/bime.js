@@ -1,3 +1,5 @@
-export function sayHello() {
-    console.log('hi');
-}
+const bime = () => {
+    console.log('sending');
+    window.postMessage('hello');
+};
+export default bime;
