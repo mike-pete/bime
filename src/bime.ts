@@ -23,8 +23,8 @@ const bime = <T extends Model>(target: Window) => {
 }
 
 const exposedPromiseFactory = <T>() => {
-	let resolve: (arg0: T) => void
-	let reject: (arg0: T) => void
+	let resolve: (value: T | PromiseLike<T>) => void
+	let reject: (reason: any) => void
 
 	const promise = new Promise<T>((res, rej) => {
 		resolve = res
@@ -32,8 +32,8 @@ const exposedPromiseFactory = <T>() => {
 	})
 
 	return {
-		resolve: resolve!,
-		reject: reject!,
+		resolve,
+		reject,
 		promise,
 	}
 }
