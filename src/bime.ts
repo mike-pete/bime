@@ -1,4 +1,4 @@
-import exposedPromiseFactory, { RejectType, ResolveType } from "./exposedPromiseFactory";
+import exposedPromiseFactory, { RejectType, ResolveType } from './exposedPromiseFactory'
 
 type Model = Record<string, (...args: any[]) => any>
 
@@ -30,16 +30,5 @@ const bime = <T extends Model>(target: Window) => {
 
 	return new Proxy<MessageResponse<T>>({} as any, handler)
 }
-
-
-// type RemoteModelType = {
-// 	greet: (name: string) => string
-// }
-
-// const window = new Window()
-
-// let bi = bime<RemoteModelType>(window)
-
-// const response = bi.greet('Mike')
 
 export default bime
