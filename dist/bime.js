@@ -1,7 +1,10 @@
 const bime = (target) => {
+    const sentMessages = {};
     const sendMessage = (prop, args) => {
         target.postMessage({ prop, args }, '*');
-        const { promise, resolve } = exposedPromiseFactory();
+        const { promise, resolve, reject } = exposedPromiseFactory();
+        const id = Math.random().toString(36).substring(7);
+        sentMessages[id] = { resolve, reject, acknowledged: false };
         return promise;
     };
     const handler = {
@@ -21,8 +24,8 @@ const exposedPromiseFactory = () => {
         reject = rej;
     });
     return {
-        resolve: resolve,
-        reject: reject,
+        resolve,
+        reject,
         promise,
     };
 };

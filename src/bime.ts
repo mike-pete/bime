@@ -5,16 +5,23 @@ type MessageResponse<T> = {
 }
 
 const bime = <T extends Model>(target: Window) => {
-	const sendMessage = <T extends Model>(prop: string, args: Parameters<T[keyof T]>) => {
+	const sentMessages: Record<
+		string,
+		{ resolve: ResolveType<ReturnType<T[keyof T]>>; reject: RejectType; acknowledged: boolean }
+	> = {}
+
+	const sendMessage = (prop: string, args: Parameters<T[keyof T]>) => {
 		target.postMessage({ prop, args }, '*')
-		const { promise, resolve } = exposedPromiseFactory<ReturnType<T[keyof T]>>()
+		const { promise, resolve, reject } = exposedPromiseFactory<ReturnType<T[keyof T]>>()
+		const id = Math.random().toString(36).substring(7)
+		sentMessages[id] = { resolve, reject, acknowledged: false }
 		return promise
 	}
 
 	const handler: ProxyHandler<MessageResponse<T>> = {
 		get: (target: MessageResponse<T>, prop: string) => {
 			return (...args: Parameters<T[keyof T]>) => {
-				return sendMessage<T>(prop, args)
+				return sendMessage(prop, args)
 			}
 		},
 	}
@@ -22,9 +29,12 @@ const bime = <T extends Model>(target: Window) => {
 	return new Proxy<MessageResponse<T>>({} as any, handler)
 }
 
+type ResolveType<T> = (value: T | PromiseLike<T>) => void
+type RejectType = (reason?: any) => void
+
 const exposedPromiseFactory = <T>() => {
-	let resolve: (value: T | PromiseLike<T>) => void
-	let reject: (reason: any) => void
+	let resolve: ResolveType<T>
+	let reject: RejectType
 
 	const promise = new Promise<T>((res, rej) => {
 		resolve = res
