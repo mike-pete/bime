@@ -1,3 +1,5 @@
+import exposedPromiseFactory, { RejectType, ResolveType } from "./exposedPromiseFactory";
+
 type Model = Record<string, (...args: any[]) => any>
 
 type MessageResponse<T> = {
@@ -29,24 +31,6 @@ const bime = <T extends Model>(target: Window) => {
 	return new Proxy<MessageResponse<T>>({} as any, handler)
 }
 
-type ResolveType<T> = (value: T | PromiseLike<T>) => void
-type RejectType = (reason?: any) => void
-
-const exposedPromiseFactory = <T>() => {
-	let resolve: ResolveType<T>
-	let reject: RejectType
-
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res
-		reject = rej
-	})
-
-	return {
-		resolve,
-		reject,
-		promise,
-	}
-}
 
 // type RemoteModelType = {
 // 	greet: (name: string) => string
