@@ -1,34 +1,40 @@
-import exposedPromiseFactory, { RejectType, ResolveType } from './exposedPromiseFactory'
+import { RejectType, ResolveType } from './createExposedPromise'
+import { listenForMessages } from './messageHandler'
+import messageSender from './messageSender'
 
-type Model = Record<string, (...args: any[]) => any>
+export type Model = Record<string, (...args: any[]) => any>
 
-type MessageResponse<T> = {
-	[K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<R> : never
+type MessageResponse<RemoteModel> = {
+	[K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R
+		? (...args: A) => Promise<R>
+		: never
 }
 
-const bime = <T extends Model>(target: Window) => {
-	const sentMessages: Record<
-		string,
-		{ resolve: ResolveType<ReturnType<T[keyof T]>>; reject: RejectType; acknowledged: boolean }
-	> = {}
-
-	const sendMessage = (prop: string, args: Parameters<T[keyof T]>) => {
-		target.postMessage({ prop, args }, '*')
-		const { promise, resolve, reject } = exposedPromiseFactory<ReturnType<T[keyof T]>>()
-		const id = Math.random().toString(36).substring(7)
-		sentMessages[id] = { resolve, reject, acknowledged: false }
-		return promise
+export type MessagesSent<RemoteModel extends Model> = Record<
+	string,
+	{
+		resolve: ResolveType<ReturnType<RemoteModel[keyof RemoteModel]>>
+		reject: RejectType
+		acknowledged: boolean
 	}
+>
 
-	const handler: ProxyHandler<MessageResponse<T>> = {
-		get: (target: MessageResponse<T>, prop: string) => {
-			return (...args: Parameters<T[keyof T]>) => {
+const bime = <RemoteModel extends Model>(target: Window) => {
+	const sentMessages: MessagesSent<RemoteModel> = {}
+	
+	listenForMessages()
+	
+	const sendMessage = messageSender<RemoteModel>(sentMessages, target)
+
+	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
+		get: (target: MessageResponse<RemoteModel>, prop: string) => {
+			return (...args: Parameters<RemoteModel[keyof RemoteModel]>) => {
 				return sendMessage(prop, args)
 			}
 		},
 	}
 
-	return new Proxy<MessageResponse<T>>({} as any, handler)
+	return new Proxy<MessageResponse<RemoteModel>>({} as any, handler)
 }
 
 export default bime

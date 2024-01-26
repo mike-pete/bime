@@ -1,7 +1,7 @@
 export type ResolveType<T> = (value: T | PromiseLike<T>) => void
 export type RejectType = (reason?: any) => void
 
-const exposedPromiseFactory = <T>() => {
+const createExposedPromise = <T>() => {
 	let resolve: ResolveType<T>
 	let reject: RejectType
 
@@ -17,4 +17,4 @@ const exposedPromiseFactory = <T>() => {
 	}
 }
 
-export default exposedPromiseFactory
+export default createExposedPromise
