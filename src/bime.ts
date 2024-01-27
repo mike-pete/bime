@@ -1,6 +1,6 @@
 import { Model, RequestMessage } from './types'
 import { listenForMessages } from './messageHandler'
-import messageSender from './messageSender'
+import { requestSender } from './messageSender'
 import { SentMessageStore } from './types'
 
 type MessageResponse<RemoteModel> = {
@@ -14,17 +14,16 @@ const bime = <RemoteModel extends Model>(target: Window, model: Model = {}) => {
 
 	listenForMessages<RemoteModel>(model, sentMessagesStore)
 
-	const sendMessage = messageSender<RemoteModel, typeof model>(sentMessagesStore, target)
+	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, target)
 
 	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
 		get: (target: MessageResponse<RemoteModel>, prop: string) => {
 			return (...args: Parameters<RemoteModel[keyof RemoteModel]>) => {
-				const message: RequestMessage<RemoteModel> = {
+				return sendRequest({
 					type: 'request',
 					prop,
 					args,
-				}
-				return sendMessage(message)
+				})
 			}
 		},
 	}

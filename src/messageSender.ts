@@ -8,7 +8,7 @@ import {
 import { Model } from './types'
 import createExposedPromise, { RejectType } from './createExposedPromise'
 
-const messageSender = <RemoteModel extends Model, LocalModel extends Model>(
+export const requestSender = <RemoteModel extends Model>(
 	sentMessages: SentMessageStore<RemoteModel>,
 	target: Window
 ) => {
@@ -17,7 +17,7 @@ const messageSender = <RemoteModel extends Model, LocalModel extends Model>(
 		// TODO: if tries are exceeded, reject with error
 	}
 
-	const saveMessageToStore = (message: RequestMessage<RemoteModel> & { id: string }) => {
+	const saveMessageToStore = (message: RequestMessage<RemoteModel>) => {
 		const exposedPromise = createExposedPromise<ReturnType<RemoteModel[keyof RemoteModel]>>()
 
 		sentMessages[message.id] = {
@@ -29,26 +29,23 @@ const messageSender = <RemoteModel extends Model, LocalModel extends Model>(
 		return exposedPromise
 	}
 
-	const sendMessage = (
-		messageData:
-			| RequestMessage<RemoteModel>
-			| AckMessage
-			| ResponseMessage<LocalModel>
-			| ErrorMessage
-	) => {
+	const sendRequest = (messageData: Omit<RequestMessage<RemoteModel>, 'id'>) => {
 		const message = { ...messageData, id: Math.random().toString(36).substring(7) }
 		target.postMessage(message, '*')
 
 		if (messageData.type === 'request') {
-			const exposedPromise = saveMessageToStore(
-				message as RequestMessage<RemoteModel> & { id: string }
-			)
+			const exposedPromise = saveMessageToStore(message as RequestMessage<RemoteModel>)
 			autoRetry(message.id, exposedPromise.reject)
 			return exposedPromise.promise
 		}
 	}
 
-	return sendMessage
+	return sendRequest
 }
 
-export default messageSender
+export const sendResponse = <LocalModel extends Model>(
+	message: { id: string } & (AckMessage | ResponseMessage<LocalModel> | ErrorMessage),
+	target: Window
+) => {
+	target.postMessage(message, '*')
+}
