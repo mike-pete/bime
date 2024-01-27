@@ -1,8 +1,7 @@
-import { RejectType, ResolveType } from './createExposedPromise'
+import { Model } from './types'
 import { listenForMessages } from './messageHandler'
 import messageSender from './messageSender'
-
-export type Model = Record<string, (...args: any[]) => any>
+import { SentMessageStore } from './types'
 
 type MessageResponse<RemoteModel> = {
 	[K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R
@@ -10,17 +9,8 @@ type MessageResponse<RemoteModel> = {
 		: never
 }
 
-export type MessagesSent<RemoteModel extends Model> = Record<
-	string,
-	{
-		resolve: ResolveType<ReturnType<RemoteModel[keyof RemoteModel]>>
-		reject: RejectType
-		acknowledged: boolean
-	}
->
-
-const bime = <RemoteModel extends Model>(target: Window, model:Model = {}) => {
-	const sentMessages: MessagesSent<RemoteModel> = {}
+const bime = <RemoteModel extends Model>(target: Window, model: Model = {}) => {
+	const sentMessages: SentMessageStore<RemoteModel> = {}
 
 	listenForMessages(model)
 

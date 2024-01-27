@@ -1,4 +1,4 @@
-import { Model } from './bime'
+import { Model } from './types'
 
 export const listenForMessages = (model: Model) => {
 	window.addEventListener('message', messageHandler(model))
@@ -16,7 +16,6 @@ const messageHandler = (model: Model) => (event: MessageEvent) => {
 	if (!(prop in model)) return
 
 	const result = model[prop](...args)
-
 
 	// TODO: send result back to sender
 
