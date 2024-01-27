@@ -19,11 +19,11 @@ export type MessagesSent<RemoteModel extends Model> = Record<
 	}
 >
 
-const bime = <RemoteModel extends Model>(target: Window) => {
+const bime = <RemoteModel extends Model>(target: Window, model:Model = {}) => {
 	const sentMessages: MessagesSent<RemoteModel> = {}
-	
-	listenForMessages()
-	
+
+	listenForMessages(model)
+
 	const sendMessage = messageSender<RemoteModel>(sentMessages, target)
 
 	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
@@ -34,7 +34,7 @@ const bime = <RemoteModel extends Model>(target: Window) => {
 		},
 	}
 
-	return new Proxy<MessageResponse<RemoteModel>>({} as any, handler)
+	return new Proxy<MessageResponse<RemoteModel>>({} as MessageResponse<RemoteModel>, handler)
 }
 
 export default bime
