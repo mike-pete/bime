@@ -19,10 +19,11 @@ type AckData = {
 	id: string
 }
 
-type RequestData<T extends Model> = {
+type RequestData<RemoteModel extends Model> = {
 	type: 'request'
 	id: string
-	data: ReturnType<T[keyof T]>
+	prop: keyof RemoteModel
+    args: Parameters<RemoteModel[keyof RemoteModel]>
 }
 
 type LibContext = {
@@ -50,6 +51,3 @@ export type SentMessageStore<RemoteModel extends Model> = Record<
 	string,
 	OutgoingMessage<RemoteModel>
 >
-
-export type OutgoingMessageQueue<RemoteModel extends Model> = Record<string, MessageData<RemoteModel>[]>
-

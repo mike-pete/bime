@@ -10,11 +10,12 @@ type MessageResponse<RemoteModel> = {
 }
 
 const bime = <RemoteModel extends Model>(target: Window, model: Model = {}) => {
-	const sentMessages: SentMessageStore<RemoteModel> = {}
+
+	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
 
 	listenForMessages(model)
 
-	const sendMessage = messageSender<RemoteModel>(sentMessages, target)
+	const sendMessage = messageSender<RemoteModel>(sentMessagesStore, target)
 
 	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
 		get: (target: MessageResponse<RemoteModel>, prop: string) => {
