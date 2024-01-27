@@ -12,7 +12,7 @@ type MessageResponse<RemoteModel> = {
 const bime = <RemoteModel extends Model>(target: Window, model: Model = {}) => {
 	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
 
-	listenForMessages(model)
+	listenForMessages<RemoteModel>(model, sentMessagesStore)
 
 	const sendMessage = messageSender<RemoteModel, typeof model>(sentMessagesStore, target)
 
