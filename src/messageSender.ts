@@ -17,17 +17,16 @@ const messageSender = <RemoteModel extends Model, LocalModel extends Model>(
 		// TODO: if tries are exceeded, reject with error
 	}
 
-	const saveMessageToStore = (message: RequestMessage<RemoteModel>) => {
+	const saveMessageToStore = (message: RequestMessage<RemoteModel> & { id: string }) => {
 		const exposedPromise = createExposedPromise<ReturnType<RemoteModel[keyof RemoteModel]>>()
-		const id = Math.random().toString(36).substring(7)
 
-		sentMessages[id] = {
+		sentMessages[message.id] = {
 			message,
 			acknowledged: false,
 			promise: exposedPromise,
 		}
 
-		return { exposedPromise, id }
+		return exposedPromise
 	}
 
 	const sendMessage = (
@@ -37,11 +36,14 @@ const messageSender = <RemoteModel extends Model, LocalModel extends Model>(
 			| ResponseMessage<LocalModel>
 			| ErrorMessage
 	) => {
-		target.postMessage(messageData, '*')
+		const message = { ...messageData, id: Math.random().toString(36).substring(7) }
+		target.postMessage(message, '*')
 
 		if (messageData.type === 'request') {
-			const { exposedPromise, id } = saveMessageToStore(messageData as RequestMessage<RemoteModel>)
-			autoRetry(id, exposedPromise.reject)
+			const exposedPromise = saveMessageToStore(
+				message as RequestMessage<RemoteModel> & { id: string }
+			)
+			autoRetry(message.id, exposedPromise.reject)
 			return exposedPromise.promise
 		}
 	}
