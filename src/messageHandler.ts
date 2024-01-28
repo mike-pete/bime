@@ -15,11 +15,17 @@ const messageHandler =
 		const id = event.data?.id
 
 		if (!id) return
+		
+		// TODO: is the origin in the whitelist?
+		
+		if (type === 'response' || type === 'error' || type === 'ack') {
+			// TODO: does the reply window match the target window?
 
-		// TODO:
-		// Do we trust the sender of this message?
-		// if (event.origin !== 'http://example.com') return
+			const sentMessage = sentMessagesStore[id]
+			if (!sentMessage) return
+		}
 
+		
 		switch (type) {
 			case 'request':
 				return handleRequest(event, model)
@@ -40,12 +46,17 @@ const handleRequest = (event: MessageEvent, model: Model) => {
 	if (!prop) return
 	if (typeof prop !== 'string') return
 	if (!(prop in model)) {
-		// TODO: send response that is an error
+		const error = new ReferenceError(`Property "${prop}" does not exist on model`)
+		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window)
+		return
 	}
 
-	const result = model[prop](...args)
-
-	sendResponse({ id: event.data.id, type: 'response', data: result }, event.source as Window)
+	try {
+		const result = model[prop](...args)
+		sendResponse({ id: event.data.id, type: 'response', data: result }, event.source as Window)
+	} catch (error) {
+		sendResponse({ id: event.data.id, type: 'error', error: error }, event.source as Window)
+	}
 }
 
 const handleResponse = <RemoteModel extends Model>(
@@ -53,19 +64,18 @@ const handleResponse = <RemoteModel extends Model>(
 	sentMessagesStore: SentMessageStore<RemoteModel>
 ) => {
 	const { id, data } = event.data
-	if (!id) return
-
 	const sentMessage = sentMessagesStore[id]
-
-	if (!sentMessage) return
-
 	sentMessage.promise.resolve({ data, event })
 }
 
 const handleError = <RemoteModel extends Model>(
 	event: MessageEvent,
 	sentMessagesStore: SentMessageStore<RemoteModel>
-) => {}
+) => {
+	const { id, error } = event.data
+	const sentMessage = sentMessagesStore[id]
+	sentMessage.promise.reject({ error, event })
+}
 
 const handleAck = <RemoteModel extends Model>(
 	event: MessageEvent,
