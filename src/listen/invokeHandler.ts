@@ -32,6 +32,8 @@ const messageHandler = (model: Model) => (event: MessageEvent) => {
 
 	if (!prop) return
 
+	sendResponse({ id: event.data.id, type: 'ack' }, event.source as Window)
+
 	if (!(prop in model)) {
 		const error = new ReferenceError(`Property "${prop}" does not exist on model`)
 		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window)

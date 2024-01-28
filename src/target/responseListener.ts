@@ -59,6 +59,10 @@ const handleError = <RemoteModel extends Model>(
 const handleAck = <RemoteModel extends Model>(
 	event: MessageEvent,
 	sentMessagesStore: SentMessageStore<RemoteModel>
-) => {}
+) => {
+	const { id } = event.data
+	const sentMessage = sentMessagesStore[id]
+	sentMessage.acknowledged = true
+}
 
 export default responseListener

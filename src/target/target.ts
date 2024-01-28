@@ -1,4 +1,4 @@
-import { Model } from '../types'
+import { AutoRetryOptions, Model } from '../types'
 import requestSender from './requestSender'
 import { SentMessageStore } from '../types'
 import responseListener from './responseListener'
@@ -13,9 +13,9 @@ type Target<RemoteModel extends Model> = {
 	cleanup: () => void
 } & MessageResponse<RemoteModel>
 
-const target = <RemoteModel extends Model>(targetWindow: Window) => {
+const target = <RemoteModel extends Model>(targetWindow: Window, options?: AutoRetryOptions) => {
 	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
-	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, targetWindow)
+	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, targetWindow, options)
 	const cleanup = responseListener<RemoteModel>(sentMessagesStore)
 
 	let cleanedUp = false

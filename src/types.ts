@@ -16,7 +16,7 @@ export type ErrorMessage = {
 
 export type AckMessage = {
 	id: string
-	type: 'response'
+	type: 'ack'
 }
 
 export type RequestMessage<RemoteModel extends Model> = {
@@ -45,3 +45,5 @@ export type SentMessageStore<RemoteModel extends Model> = Record<
 		promise: ExposedMessagePromise<RemoteModel>
 	}
 >
+
+export type AutoRetryOptions = { timeout: number; tries: number; backoff: number }
