@@ -1,9 +1,22 @@
 import { AckMessage, ErrorMessage, Model, ResponseMessage } from './types'
 
 const invokeHandler = (/*origins,*/ model: Model) => {
+	let cleanedUp = false
+
+	if ('cleanup' in model) {
+		console.warn('"cleanup" is a reserved property name and cannot be used on the model.')
+	}
 	const handler = messageHandler(model)
 	window.addEventListener('message', handler)
-	return () => window.removeEventListener('message', handler)
+	return {
+		cleanup: () => {
+			if (cleanedUp) {
+				throw new Error('The listener has been cleaned up.')
+			}
+			cleanedUp = true
+			window.removeEventListener('message', handler)
+		},
+	}
 }
 
 const messageHandler = (model: Model) => (event: MessageEvent) => {

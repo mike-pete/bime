@@ -10,16 +10,32 @@ type MessageResponse<RemoteModel> = {
 		: never
 }
 
-const target = <RemoteModel extends Model>(targetWindow: Window) => {
+type Target<RemoteModel extends Model> = {
+	cleanup: () => void
+} & MessageResponse<RemoteModel>
 
+const target = <RemoteModel extends Model>(targetWindow: Window) => {
 	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
 	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, targetWindow)
 	const cleanup = responseListener<RemoteModel>(sentMessagesStore)
 
+	let cleanedUp = false
+
 	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
 		get: (target: MessageResponse<RemoteModel>, prop: string) => {
-			if (prop === 'cleanup') return cleanup
+			if (prop === 'cleanup') {
+				return () => {
+					if (cleanedUp) {
+						throw new Error('The response listener has been cleaned up.')
+					}
+					cleanup()
+					cleanedUp = true
+				}
+			}
 			return (...args: Parameters<RemoteModel[keyof RemoteModel]>) => {
+				if (cleanedUp) {
+					throw new Error('The response listener has been cleaned up.')
+				}
 				return sendRequest({
 					type: 'request',
 					prop,
@@ -28,7 +44,7 @@ const target = <RemoteModel extends Model>(targetWindow: Window) => {
 			}
 		},
 	}
-	return new Proxy<MessageResponse<RemoteModel>>({} as MessageResponse<RemoteModel>, handler)
+	return new Proxy<Target<RemoteModel>>({} as Target<RemoteModel>, handler)
 }
 
 const bime = { listen: invokeHandler, target }
