@@ -1,4 +1,4 @@
-import { Model, SentMessageStore } from './types'
+import { Model, SentMessageStore } from '../types'
 
 const responseListener = <RemoteModel extends Model>(
 	sentMessagesStore: SentMessageStore<RemoteModel>

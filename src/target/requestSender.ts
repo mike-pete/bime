@@ -1,8 +1,8 @@
-import { RequestMessage, SentMessageStore } from './types'
-import { Model } from './types'
+import { RequestMessage, SentMessageStore } from '../types'
+import { Model } from '../types'
 import createExposedPromise, { RejectType } from './createExposedPromise'
 
-export const requestSender = <RemoteModel extends Model>(
+const requestSender = <RemoteModel extends Model>(
 	sentMessages: SentMessageStore<RemoteModel>,
 	target: Window
 ) => {
@@ -36,3 +36,5 @@ export const requestSender = <RemoteModel extends Model>(
 
 	return sendRequest
 }
+
+export default requestSender

@@ -1,4 +1,4 @@
-import { AckMessage, ErrorMessage, Model, ResponseMessage } from './types'
+import { AckMessage, ErrorMessage, Model, ResponseMessage } from '../types'
 
 const invokeHandler = (/*origins,*/ model: Model) => {
 	let cleanedUp = false

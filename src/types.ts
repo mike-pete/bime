@@ -1,4 +1,4 @@
-import { ResolveType, RejectType } from './createExposedPromise'
+import { ResolveType, RejectType } from './target/createExposedPromise'
 
 export type Model = Record<string, (...args: any[]) => any>
 
