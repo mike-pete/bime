@@ -1,10 +1,4 @@
-import {
-	AckMessage,
-	ErrorMessage,
-	RequestMessage,
-	ResponseMessage,
-	SentMessageStore,
-} from './types'
+import { RequestMessage, SentMessageStore } from './types'
 import { Model } from './types'
 import createExposedPromise, { RejectType } from './createExposedPromise'
 
@@ -41,11 +35,4 @@ export const requestSender = <RemoteModel extends Model>(
 	}
 
 	return sendRequest
-}
-
-export const sendResponse = <LocalModel extends Model>(
-	message: { id: string } & (AckMessage | ResponseMessage<LocalModel> | ErrorMessage),
-	target: Window
-) => {
-	target.postMessage(message, '*')
 }
