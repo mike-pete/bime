@@ -44,7 +44,7 @@ const handleResponse = <RemoteModel extends Model>(
 ) => {
 	const { id, data } = event.data
 	const sentMessage = sentMessagesStore[id]
-	sentMessage.promise.resolve({ data, event })
+	sentMessage.promise.resolve(data)
 }
 
 const handleError = <RemoteModel extends Model>(
@@ -53,7 +53,7 @@ const handleError = <RemoteModel extends Model>(
 ) => {
 	const { id, error } = event.data
 	const sentMessage = sentMessagesStore[id]
-	sentMessage.promise.reject({ error, event })
+	sentMessage.promise.reject(error)
 }
 
 const handleAck = <RemoteModel extends Model>(
