@@ -49,6 +49,7 @@ const requestSender = <RemoteModel extends Model>(
 			message,
 			acknowledged: false,
 			promise: exposedPromise,
+			target
 		}
 
 		return exposedPromise

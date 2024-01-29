@@ -43,6 +43,7 @@ export type SentMessageStore<RemoteModel extends Model> = Record<
 		message: RequestMessage<RemoteModel>
 		acknowledged: boolean
 		promise: ExposedMessagePromise<RemoteModel>
+		target: Window
 	}
 >
 

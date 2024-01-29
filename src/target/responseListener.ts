@@ -19,10 +19,10 @@ const messageHandler =
 		const type = event.data?.type
 		if (type !== 'response' && type !== 'error' && type !== 'ack') return
 
-		// TODO: does the reply window match the target window?
-
 		const sentMessage = sentMessagesStore[id]
 		if (!sentMessage) return
+
+		if (event.source !== sentMessage.target) return
 
 		switch (type) {
 			case 'response':

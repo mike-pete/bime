@@ -13,9 +13,9 @@ type Target<RemoteModel extends Model> = {
 	cleanup: () => void
 } & MessageResponse<RemoteModel>
 
-const target = <RemoteModel extends Model>(targetWindow: Window, options?: AutoRetryOptions) => {
+const target = <RemoteModel extends Model>(target: Window, options?: AutoRetryOptions) => {
 	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
-	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, targetWindow, options)
+	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, target, options)
 	const cleanup = responseListener<RemoteModel>(sentMessagesStore)
 
 	let cleanedUp = false
