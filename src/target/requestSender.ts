@@ -37,7 +37,7 @@ const requestSender = <RemoteModel extends Model>(
 				sendRequest(sentMessage.message)
 			} else {
 				const timeElapsed = Date.now() - startTime
-				return reject(`Message was not acknowledged after ${timeElapsed}ms.`)
+				reject(`Message was not acknowledged after ${timeElapsed}ms.`)
 			}
 		}, timeout)
 	}

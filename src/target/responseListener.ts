@@ -25,8 +25,6 @@ const messageHandler =
 		if (!sentMessage) return
 
 		switch (type) {
-			// case 'request':
-			// 	return handleRequest(event, model)
 			case 'response':
 				return handleResponse<RemoteModel>(event, sentMessagesStore)
 			case 'error':
