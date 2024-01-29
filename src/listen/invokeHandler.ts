@@ -44,7 +44,7 @@ const messageHandler = (model: Model) => (event: MessageEvent) => {
 		const result = model[prop](...args)
 		sendResponse({ id: event.data.id, type: 'response', data: result }, event.source as Window)
 	} catch (error) {
-		sendResponse({ id: event.data.id, type: 'error', error: error }, event.source as Window)
+		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window)
 	}
 }
 
