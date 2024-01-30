@@ -1,12 +1,12 @@
 import { AckMessage, ErrorMessage, Model, ResponseMessage } from '../types'
 
-const invokeHandler = (/*origins,*/ model: Model) => {
+const invokeHandler = (origin: string | string[], model: Model) => {
 	let cleanedUp = false
 
 	if ('cleanup' in model) {
 		console.warn('"cleanup" is a reserved property name and cannot be used on the model.')
 	}
-	const handler = messageHandler(model)
+	const handler = messageHandler(origin, model)
 	window.addEventListener('message', handler)
 	return {
 		cleanup: () => {
@@ -19,8 +19,11 @@ const invokeHandler = (/*origins,*/ model: Model) => {
 	}
 }
 
-const messageHandler = (model: Model) => (event: MessageEvent) => {
-	// TODO: is the origin in the whitelist?
+const messageHandler = (origin: string | string[], model: Model) => (event: MessageEvent) => {
+	if (origin !== '*') {
+		if (Array.isArray(origin) && !origin.includes(event.origin)) return
+		else if (origin !== event.origin) return
+	}
 
 	const id = event.data?.id
 	if (!id) return
@@ -32,27 +35,32 @@ const messageHandler = (model: Model) => (event: MessageEvent) => {
 
 	if (!prop) return
 
-	sendResponse({ id: event.data.id, type: 'ack' }, event.source as Window)
+	sendResponse({ id: event.data.id, type: 'ack' }, event.source as Window, event.origin)
 
 	if (!(prop in model)) {
 		const error = new ReferenceError(`Property "${prop}" does not exist on model`)
-		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window)
+		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window, event.origin)
 		return
 	}
 
 	try {
 		const result = model[prop](...args)
-		sendResponse({ id: event.data.id, type: 'response', data: result }, event.source as Window)
+		sendResponse(
+			{ id: event.data.id, type: 'response', data: result },
+			event.source as Window,
+			event.origin
+		)
 	} catch (error) {
-		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window)
+		sendResponse({ id: event.data.id, type: 'error', error }, event.source as Window, event.origin)
 	}
 }
 
-export const sendResponse = <LocalModel extends Model>(
+const sendResponse = <LocalModel extends Model>(
 	message: AckMessage | ResponseMessage<LocalModel> | ErrorMessage,
-	target: Window
+	target: Window,
+	origin: string
 ) => {
-	target.postMessage(message, '*')
+	target.postMessage(message, origin)
 }
 
 export default invokeHandler

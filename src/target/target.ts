@@ -13,15 +13,15 @@ type Target<RemoteModel extends Model> = {
 	cleanup: () => void
 } & MessageResponse<RemoteModel>
 
-const target = <RemoteModel extends Model>(target: Window, options?: AutoRetryOptions) => {
+const target = <RemoteModel extends Model>(target: Window, origin:string, options?: AutoRetryOptions) => {
 	const sentMessagesStore: SentMessageStore<RemoteModel> = {}
-	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, target, options)
-	const cleanup = responseListener<RemoteModel>(sentMessagesStore)
+	const sendRequest = requestSender<RemoteModel>(sentMessagesStore, target, origin, options)
+	const cleanup = responseListener<RemoteModel>(sentMessagesStore, origin)
 
 	let cleanedUp = false
 
 	const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
-		get: (target: MessageResponse<RemoteModel>, prop: string) => {
+		get: (_, prop: string) => {
 			if (prop === 'cleanup') {
 				return () => {
 					if (cleanedUp) {

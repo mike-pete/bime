@@ -5,6 +5,7 @@ import createExposedPromise, { RejectType } from './createExposedPromise'
 const requestSender = <RemoteModel extends Model>(
 	sentMessages: SentMessageStore<RemoteModel>,
 	target: Window,
+	origin: string,
 	options?: AutoRetryOptions
 ) => {
 	const autoRetry = (
@@ -65,7 +66,7 @@ const requestSender = <RemoteModel extends Model>(
 	}
 
 	const sendRequest = (message: RequestMessage<RemoteModel>) => {
-		target.postMessage(message, '*')
+		target.postMessage(message, origin)
 	}
 
 	return sendNewRequest

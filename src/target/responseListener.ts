@@ -1,17 +1,18 @@
 import { Model, SentMessageStore } from '../types'
 
 const responseListener = <RemoteModel extends Model>(
-	sentMessagesStore: SentMessageStore<RemoteModel>
+	sentMessagesStore: SentMessageStore<RemoteModel>,
+	origin: string
 ) => {
-	const handler = messageHandler<RemoteModel>(sentMessagesStore)
+	const handler = messageHandler<RemoteModel>(sentMessagesStore, origin)
 	window.addEventListener('message', handler)
 	return () => window.removeEventListener('message', handler)
 }
 
 const messageHandler =
-	<RemoteModel extends Model>(sentMessagesStore: SentMessageStore<RemoteModel>) =>
+	<RemoteModel extends Model>(sentMessagesStore: SentMessageStore<RemoteModel>, origin: string) =>
 	(event: MessageEvent) => {
-		// TODO: is the origin in the whitelist?
+		if (origin !== '*' && origin !== event.origin) return
 
 		const id = event.data?.id
 		if (!id) return
