@@ -50,7 +50,7 @@ const requestSender = <RemoteModel extends Model>(
 			message,
 			acknowledged: false,
 			promise: exposedPromise,
-			target
+			target,
 		}
 
 		return exposedPromise
@@ -58,10 +58,19 @@ const requestSender = <RemoteModel extends Model>(
 
 	const sendNewRequest = (messageData: Omit<RequestMessage<RemoteModel>, 'id'>) => {
 		const message = { ...messageData, id: Math.random().toString(36).substring(7) }
-		sendRequest(message)
-
 		const exposedPromise = saveMessageToStore(message as RequestMessage<RemoteModel>)
-		autoRetry(message.id, exposedPromise.reject, options)
+
+		if (origin === '*' || origin === target.origin) {
+			sendRequest(message)
+			autoRetry(message.id, exposedPromise.reject, options)
+		} else {
+			exposedPromise.reject(
+				new Error(
+					`The target window's origin "${target.origin}" does not match the specified origin "${origin}". The request was aborted before sending.`
+				)
+			)
+		}
+
 		return exposedPromise.promise
 	}
 
