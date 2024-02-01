@@ -1,7 +1,7 @@
 import type { Model } from "../bime";
-import type { AutoRetryOptions, SentMessageStore } from "./types";
 import requestSender from "./requestSender";
 import responseListener from "./responseListener";
+import type { AutoRetryOptions, SentMessageStore } from "./types";
 
 type MessageResponse<RemoteModel> = {
   [K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R

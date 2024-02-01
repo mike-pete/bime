@@ -1,5 +1,5 @@
 import type { Model } from "../bime";
-import type { ResolveType, RejectType } from "./createExposedPromise";
+import type { RejectType, ResolveType } from "./createExposedPromise";
 
 type ResolveData<RemoteModel extends Model> = {
   data: ReturnType<RemoteModel[keyof RemoteModel]>;

@@ -1,6 +1,6 @@
-import { AutoRetryOptions, SentMessageStore } from "./types";
-import { Model } from "../bime";
-import createExposedPromise, { RejectType } from "./createExposedPromise";
+import type { Model } from "../bime";
+import createExposedPromise, { type RejectType } from "./createExposedPromise";
+import { type AutoRetryOptions, type SentMessageStore } from "./types";
 
 type RequestMessage<RemoteModel extends Model> = {
   id: string;
