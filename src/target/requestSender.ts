@@ -1,5 +1,4 @@
-import { AutoRetryOptions } from './target'
-import { SentMessageStore } from './target'
+import { AutoRetryOptions, SentMessageStore } from './types'
 import { Model } from '../bime'
 import createExposedPromise, { RejectType } from './createExposedPromise'
 

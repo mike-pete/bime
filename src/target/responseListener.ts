@@ -1,5 +1,5 @@
 import { Model } from '../bime'
-import { SentMessageStore } from './target'
+import { SentMessageStore } from './types'
 
 const responseListener = <RemoteModel extends Model>(
 	sentMessagesStore: SentMessageStore<RemoteModel>,
