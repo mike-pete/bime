@@ -1,4 +1,4 @@
-import { Model } from "../bime";
+import { type Model } from "../bime";
 
 type ResponseMessage<T extends Model> = {
   id: string;
@@ -48,13 +48,14 @@ const invokeHandler =
     }
 
     const id = event.data?.id;
-    if (!id) return;
+    if (id === undefined) return;
 
     const type = event.data?.type;
     if (type !== "request") return;
 
     const { prop, args } = event.data;
-    if (!prop) return;
+    if (prop === undefined) return;
+    if (typeof prop !== "string") return;
 
     sendResponse(
       { id: event.data.id, type: "ack" },
@@ -83,7 +84,7 @@ const invokeHandler =
       );
     } catch (error) {
       sendResponse(
-        { id: event.data.id, type: "error", error },
+        { id: event.data.id, type: "error", error: error as Error },
         event.source as Window,
         event.origin,
       );

@@ -5,6 +5,8 @@
     "declaration": true,
     "outDir": "./dist",
     "noImplicitAny": true,
+    "strict": true,
+    "strictNullChecks": true,
   },
   "include": ["src/**/*"],
 }
