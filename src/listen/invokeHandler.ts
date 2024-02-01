@@ -17,14 +17,16 @@ type AckMessage = {
 	type: 'ack'
 }
 
-const invokeHandler = (origin: string | string[], model: Model) => {
+const listen = (origin: string | string[], model: Model) => {
 	let cleanedUp = false
 
 	if ('cleanup' in model) {
 		console.warn('"cleanup" is a reserved property name and cannot be used on the model.')
 	}
-	const handler = messageHandler(origin, model)
+
+	const handler = invokeHandler(origin, model)
 	window.addEventListener('message', handler)
+
 	return {
 		cleanup: () => {
 			if (cleanedUp) {
@@ -36,7 +38,7 @@ const invokeHandler = (origin: string | string[], model: Model) => {
 	}
 }
 
-const messageHandler = (origin: string | string[], model: Model) => (event: MessageEvent) => {
+const invokeHandler = (origin: string | string[], model: Model) => (event: MessageEvent) => {
 	if (origin !== '*') {
 		if (Array.isArray(origin) && !origin.includes(event.origin)) return
 		else if (origin !== event.origin) return
@@ -49,7 +51,6 @@ const messageHandler = (origin: string | string[], model: Model) => (event: Mess
 	if (type !== 'request') return
 
 	const { prop, args } = event.data
-
 	if (!prop) return
 
 	sendResponse({ id: event.data.id, type: 'ack' }, event.source as Window, event.origin)
@@ -61,9 +62,9 @@ const messageHandler = (origin: string | string[], model: Model) => (event: Mess
 	}
 
 	try {
-		const result = model[prop](...args)
+		const invocationResult = model[prop](...args)
 		sendResponse(
-			{ id: event.data.id, type: 'response', data: result },
+			{ id: event.data.id, type: 'response', data: invocationResult },
 			event.source as Window,
 			event.origin
 		)
@@ -80,4 +81,4 @@ const sendResponse = <LocalModel extends Model>(
 	target.postMessage(message, origin)
 }
 
-export default invokeHandler
+export default listen
