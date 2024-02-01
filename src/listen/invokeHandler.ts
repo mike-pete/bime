@@ -1,4 +1,21 @@
-import { AckMessage, ErrorMessage, Model, ResponseMessage } from '../types'
+import { Model } from '../bime'
+
+type ResponseMessage<T extends Model> = {
+	id: string
+	type: 'response'
+	data: ReturnType<T[keyof T]> | 'acknowledged'
+}
+
+type ErrorMessage = {
+	id: string
+	type: 'error'
+	error: Error
+}
+
+type AckMessage = {
+	id: string
+	type: 'ack'
+}
 
 const invokeHandler = (origin: string | string[], model: Model) => {
 	let cleanedUp = false

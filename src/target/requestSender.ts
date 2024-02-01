@@ -1,6 +1,14 @@
-import { AutoRetryOptions, RequestMessage, SentMessageStore } from '../types'
-import { Model } from '../types'
+import { AutoRetryOptions } from './target'
+import { SentMessageStore } from './target'
+import { Model } from '../bime'
 import createExposedPromise, { RejectType } from './createExposedPromise'
+
+type RequestMessage<RemoteModel extends Model> = {
+	id: string
+	type: 'request'
+	prop: keyof RemoteModel
+	args: Parameters<RemoteModel[keyof RemoteModel]>
+}
 
 const requestSender = <RemoteModel extends Model>(
 	sentMessages: SentMessageStore<RemoteModel>,
