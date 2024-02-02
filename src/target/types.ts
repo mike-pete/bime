@@ -1,10 +1,8 @@
 import type { Model } from "../bime";
 import type { RejectType, ResolveType } from "./createExposedPromise";
 
-type ResolveData<RemoteModel extends Model> = {
-  data: ReturnType<RemoteModel[keyof RemoteModel]>;
-  event: MessageEvent;
-};
+type ResolveData<RemoteModel extends Model> = ReturnType<RemoteModel[keyof RemoteModel]>;
+
 type ExposedMessagePromise<RemoteModel extends Model> = {
   promise: Promise<ResolveData<RemoteModel>>;
   resolve: ResolveType<ResolveData<RemoteModel>>;
@@ -22,7 +20,7 @@ export type SentMessageStore<RemoteModel extends Model> = Record<
   {
     message: RequestMessage<RemoteModel>;
     acknowledged: boolean;
-    promise: ExposedMessagePromise<RemoteModel>;
+    promise: ExposedMessagePromise<ReturnType<RemoteModel[keyof RemoteModel]>>;
     target: Window;
   }
 >;
