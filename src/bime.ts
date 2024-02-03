@@ -1,8 +1,8 @@
-import listen from "./listen/invokeHandler";
-import target from "./target/target";
+import listen from "./listen/invokeHandler"
+import target from "./target/target"
 
-export type Model = Record<string, (...args: any[]) => any>;
+export type Model = Record<string, (...args: any[]) => any>
 
-const bime = { listen, target };
+const bime = { listen, target }
 
-export default bime;
+export default bime
