@@ -5,7 +5,7 @@ import type { AutoRetryOptions, SentMessageStore } from "./types";
 
 type MessageResponse<RemoteModel> = {
   [K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R
-    ? (...args: A) => Promise<R>
+    ? (...args: A) => R extends Promise<any> ? R : Promise<R>
     : never;
 };
 

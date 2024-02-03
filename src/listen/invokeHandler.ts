@@ -77,11 +77,30 @@ const invokeHandler =
 
     try {
       const invocationResult = model[prop](...args);
-      sendResponse(
-        { id: event.data.id, type: "response", data: invocationResult },
-        event.source as Window,
-        event.origin,
-      );
+
+      if (invocationResult instanceof Promise) {
+        invocationResult
+          .then((data) => {
+            sendResponse(
+              { id: event.data.id, type: "response", data },
+              event.source as Window,
+              event.origin,
+            );
+          })
+          .catch((error) => {
+            sendResponse(
+              { id: event.data.id, type: "error", error },
+              event.source as Window,
+              event.origin,
+            );
+          });
+      } else {
+        sendResponse(
+          { id: event.data.id, type: "response", data: invocationResult },
+          event.source as Window,
+          event.origin,
+        );
+      }
     } catch (error) {
       sendResponse(
         { id: event.data.id, type: "error", error: error as Error },
