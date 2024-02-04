@@ -47,15 +47,16 @@ const invokeHandler =
       else if (origin !== event.origin) return
     }
 
-    const id = event.data?.id
-    if (id === undefined) return
+    const {
+      id,
+      prop,
+      args,
+      type,
+    }: { id: string; prop: string; args: any[]; type: string } = event.data
 
-    const type = event.data?.type
+    if (typeof id !== "string" || id === "") return
     if (type !== "request") return
-
-    const { prop, args } = event.data
-    if (prop === undefined) return
-    if (typeof prop !== "string") return
+    if (typeof prop !== "string" || prop === "") return
 
     sendResponse(
       { id: event.data.id, type: "ack" },
@@ -76,6 +77,7 @@ const invokeHandler =
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const invocationResult = model[prop](...args)
 
       if (invocationResult instanceof Promise) {

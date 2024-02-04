@@ -66,7 +66,7 @@ const requestSender = <RemoteModel extends Model>(
     return exposedPromise
   }
 
-  const sendNewRequest = (
+  const sendNewRequest = async (
     messageData: Omit<RequestMessage<RemoteModel>, "id">,
   ) => {
     const message = {
@@ -88,7 +88,7 @@ const requestSender = <RemoteModel extends Model>(
       )
     }
 
-    return exposedPromise.promise
+    return await exposedPromise.promise
   }
 
   const sendRequest = (message: RequestMessage<RemoteModel>) => {
