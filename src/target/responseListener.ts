@@ -1,5 +1,5 @@
-import { Model } from "../bime"
-import { SentMessageStore } from "./types"
+import type { Model } from "../bime"
+import type { SentMessageStore } from "./types"
 
 const responseListener = <RemoteModel extends Model>(
   sentMessagesStore: SentMessageStore<RemoteModel>,
@@ -7,7 +7,9 @@ const responseListener = <RemoteModel extends Model>(
 ) => {
   const handler = messageHandler<RemoteModel>(sentMessagesStore, origin)
   window.addEventListener("message", handler)
-  return () => window.removeEventListener("message", handler)
+  return () => {
+    window.removeEventListener("message", handler)
+  }
 }
 
 const messageHandler =
@@ -19,25 +21,26 @@ const messageHandler =
     if (origin !== "*" && origin !== event.origin) return
 
     const id = event.data?.id
-    if (!id) return
+    if (typeof id !== "string" || id === "") return
 
     const type = event.data?.type
     if (type !== "response" && type !== "error" && type !== "ack") return
 
+    if (!(id in sentMessagesStore)) return
     const sentMessage = sentMessagesStore[id]
-    if (!sentMessage) return
 
     if (event.source !== sentMessage.target) return
 
     switch (type) {
       case "response":
-        return handleResponse<RemoteModel>(event, sentMessagesStore)
+        handleResponse<RemoteModel>(event, sentMessagesStore)
+        break
       case "error":
-        return handleError<RemoteModel>(event, sentMessagesStore)
+        handleError<RemoteModel>(event, sentMessagesStore)
+        break
       case "ack":
-        return handleAck<RemoteModel>(event, sentMessagesStore)
-      default:
-        return
+        handleAck<RemoteModel>(event, sentMessagesStore)
+        break
     }
   }
 
@@ -48,6 +51,7 @@ const handleResponse = <RemoteModel extends Model>(
   const { id, data } = event.data
   const sentMessage = sentMessagesStore[id]
   sentMessage.promise.resolve(data)
+  delete sentMessagesStore[id]
 }
 
 const handleError = <RemoteModel extends Model>(
@@ -57,6 +61,7 @@ const handleError = <RemoteModel extends Model>(
   const { id, error } = event.data
   const sentMessage = sentMessagesStore[id]
   sentMessage.promise.reject(error)
+  delete sentMessagesStore[id]
 }
 
 const handleAck = <RemoteModel extends Model>(
