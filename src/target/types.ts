@@ -17,7 +17,7 @@ type RequestMessage<RemoteModel extends Model> = {
   args: Parameters<RemoteModel[keyof RemoteModel]>
 }
 
-export type SentMessageStore<RemoteModel extends Model> = Record<
+export type SentMessageStore<RemoteModel extends Model> = Map<
   string,
   {
     message: RequestMessage<RemoteModel>

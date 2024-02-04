@@ -20,58 +20,31 @@ const messageHandler =
   (event: MessageEvent) => {
     if (origin !== "*" && origin !== event.origin) return
 
-    const id = event.data?.id
+    const { id, data, type, error } = event.data
     if (typeof id !== "string" || id === "") return
-
-    const type = event.data?.type
     if (type !== "response" && type !== "error" && type !== "ack") return
 
-    if (!(id in sentMessagesStore)) return
-    const sentMessage = sentMessagesStore[id]
+    const sentMessage = sentMessagesStore.get(id)
+    if (sentMessage === undefined) return
 
     if (event.source !== sentMessage.target) return
 
     switch (type) {
       case "response":
-        handleResponse<RemoteModel>(event, sentMessagesStore)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        sentMessage.promise.resolve(data)
+        sentMessagesStore.delete(id)
         break
+
       case "error":
-        handleError<RemoteModel>(event, sentMessagesStore)
+        sentMessage.promise.reject(error)
+        sentMessagesStore.delete(id)
         break
+
       case "ack":
-        handleAck<RemoteModel>(event, sentMessagesStore)
+        sentMessagesStore.set(id, {...sentMessage, acknowledged: true})
         break
     }
   }
-
-const handleResponse = <RemoteModel extends Model>(
-  event: MessageEvent,
-  sentMessagesStore: SentMessageStore<RemoteModel>,
-) => {
-  const { id, data } = event.data
-  const sentMessage = sentMessagesStore[id]
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  sentMessage.promise.resolve(data)
-  delete sentMessagesStore[id]
-}
-
-const handleError = <RemoteModel extends Model>(
-  event: MessageEvent,
-  sentMessagesStore: SentMessageStore<RemoteModel>,
-) => {
-  const { id, error } = event.data
-  const sentMessage = sentMessagesStore[id]
-  sentMessage.promise.reject(error)
-  delete sentMessagesStore[id]
-}
-
-const handleAck = <RemoteModel extends Model>(
-  event: MessageEvent,
-  sentMessagesStore: SentMessageStore<RemoteModel>,
-) => {
-  const { id } = event.data
-  const sentMessage = sentMessagesStore[id]
-  sentMessage.acknowledged = true
-}
 
 export default responseListener

@@ -18,7 +18,7 @@ const target = <RemoteModel extends Model>(
   origin: string,
   options?: AutoRetryOptions,
 ) => {
-  const sentMessagesStore: SentMessageStore<RemoteModel> = {}
+  const sentMessagesStore: SentMessageStore<RemoteModel> = new Map()
   const sendRequest = requestSender<RemoteModel>(
     sentMessagesStore,
     target,

@@ -10,7 +10,7 @@ type RequestMessage<RemoteModel extends Model> = {
 }
 
 const requestSender = <RemoteModel extends Model>(
-  sentMessages: SentMessageStore<RemoteModel>,
+  sentMessagesStore: SentMessageStore<RemoteModel>,
   target: Window,
   origin: string,
   options?: AutoRetryOptions,
@@ -28,7 +28,8 @@ const requestSender = <RemoteModel extends Model>(
     const { timeout, tries, backoff } = options
 
     setTimeout(() => {
-      const sentMessage = sentMessages[id]
+      const sentMessage = sentMessagesStore.get(id)
+      if (sentMessage === undefined) return
       if (sentMessage.acknowledged) return
 
       if (tries > 0) {
@@ -56,12 +57,12 @@ const requestSender = <RemoteModel extends Model>(
     const exposedPromise =
       createExposedPromise<ReturnType<RemoteModel[keyof RemoteModel]>>()
 
-    sentMessages[message.id] = {
+    sentMessagesStore.set(message.id, {
       message,
       acknowledged: false,
       promise: exposedPromise,
       target,
-    }
+    })
 
     return exposedPromise
   }
