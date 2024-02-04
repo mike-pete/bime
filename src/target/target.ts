@@ -9,9 +9,9 @@ type MessageResponse<RemoteModel> = {
     : never
 }
 
-type Target<RemoteModel extends Model> = {
+type Target<RemoteModel extends Model> = MessageResponse<RemoteModel> & {
   cleanup: () => void
-} & MessageResponse<RemoteModel>
+}
 
 const target = <RemoteModel extends Model>(
   target: Window,
@@ -29,7 +29,7 @@ const target = <RemoteModel extends Model>(
 
   let cleanedUp = false
 
-  const handler: ProxyHandler<MessageResponse<RemoteModel>> = {
+  const handler: ProxyHandler<Target<RemoteModel>> = {
     get: (_, prop: string) => {
       if (prop === "cleanup") {
         return () => {
@@ -40,11 +40,11 @@ const target = <RemoteModel extends Model>(
           cleanedUp = true
         }
       }
-      return (...args: Parameters<RemoteModel[keyof RemoteModel]>) => {
+      return async (...args: Parameters<RemoteModel[keyof RemoteModel]>) => {
         if (cleanedUp) {
           throw new Error("The response listener has been cleaned up.")
         }
-        return sendRequest({
+        return await sendRequest({
           type: "request",
           prop,
           args,
@@ -52,6 +52,8 @@ const target = <RemoteModel extends Model>(
       }
     },
   }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return new Proxy<Target<RemoteModel>>({} as Target<RemoteModel>, handler)
 }
 

@@ -50,6 +50,7 @@ const handleResponse = <RemoteModel extends Model>(
 ) => {
   const { id, data } = event.data
   const sentMessage = sentMessagesStore[id]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   sentMessage.promise.resolve(data)
   delete sentMessagesStore[id]
 }
