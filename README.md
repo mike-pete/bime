@@ -4,10 +4,11 @@ A simple, bi-directional, promise-based [postMessage](https://developer.mozilla.
 
 ## Features
 
-- Promise-based
-- Bi-directional communication without strings
 - Full Typescript support
-- Expose functions to be called remotely
+- Easily expose functions to be called remotely
+- Promise-based
+- Model-driven
+- Bi-directional communication
 - Message acknowledgement and automatic retry when an acknowledgement is not received
 - Zero dependencies
 - Origin validation
