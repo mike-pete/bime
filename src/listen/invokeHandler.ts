@@ -66,7 +66,7 @@ const invokeHandler =
 
     if (typeof model[prop] !== "function") {
       const error = new ReferenceError(
-        `Invalid property "${prop}"`,
+        `Invalid property "${prop}" is not a function on the model`,
       )
       sendResponse(
         { id: event.data.id, type: "error", error },
