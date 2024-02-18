@@ -64,9 +64,9 @@ const invokeHandler =
       event.origin,
     )
 
-    if (!(prop in model)) {
+    if (typeof model[prop] !== "function") {
       const error = new ReferenceError(
-        `Property "${prop}" does not exist on model`,
+        `Invalid property "${prop}"`,
       )
       sendResponse(
         { id: event.data.id, type: "error", error },
