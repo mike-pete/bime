@@ -30,8 +30,8 @@ const remote = <RemoteModel extends Model>(
   let cleanedUp = false
 
   const handler: ProxyHandler<Remote<RemoteModel>> = {
-    get: (_, prop: string) => {
-      if (prop === "cleanup") {
+    get: (_, procedure: string) => {
+      if (procedure === "cleanup") {
         return () => {
           if (cleanedUp) {
             throw new Error("The response listener has been cleaned up.")
@@ -46,7 +46,7 @@ const remote = <RemoteModel extends Model>(
         }
         return await sendRequest({
           type: "request",
-          prop,
+          procedure,
           args,
         })
       }

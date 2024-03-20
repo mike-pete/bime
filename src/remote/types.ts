@@ -13,7 +13,7 @@ type ExposedMessagePromise<RemoteModel extends Model> = {
 type RequestMessage<RemoteModel extends Model> = {
   id: string
   type: "request"
-  prop: keyof RemoteModel
+  procedure: keyof RemoteModel
   args: Parameters<RemoteModel[keyof RemoteModel]>
 }
 

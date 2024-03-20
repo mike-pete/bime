@@ -22,7 +22,7 @@ const listen = (model: Model, origin: string | string[]) => {
 
   if ("cleanup" in model) {
     console.warn(
-      '"cleanup" is a reserved property name and cannot be used on the model.',
+      '"cleanup" is a reserved name and cannot be used on the model.',
     )
   }
 
@@ -54,14 +54,14 @@ const callHandler =
 
     const {
       id,
-      prop,
+      procedure,
       args,
       type,
-    }: { id: string; prop: string; args: any[]; type: string } = event.data
+    }: { id: string; procedure: string; args: any[]; type: string } = event.data
 
     if (typeof id !== "string" || id === "") return
     if (type !== "request") return
-    if (typeof prop !== "string" || prop === "") return
+    if (typeof procedure !== "string" || procedure === "") return
 
     sendResponse(
       { id: event.data.id, type: "ack" },
@@ -69,9 +69,9 @@ const callHandler =
       event.origin,
     )
 
-    if (typeof model[prop] !== "function") {
+    if (typeof model[procedure] !== "function") {
       const error = new ReferenceError(
-        `Invalid property "${prop}" is not a function on the model`,
+        `"${procedure}" is not a procedure on the model`,
       )
       sendResponse(
         { id: event.data.id, type: "error", error },
@@ -83,7 +83,7 @@ const callHandler =
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const invocationResult = model[prop](...args)
+      const invocationResult = model[procedure](...args)
 
       if (invocationResult instanceof Promise) {
         invocationResult

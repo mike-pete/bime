@@ -5,7 +5,7 @@ import { type AutoRetryOptions, type SentMessageStore } from "./types"
 type RequestMessage<RemoteModel extends Model> = {
   id: string
   type: "request"
-  prop: keyof RemoteModel
+  procedure: keyof RemoteModel
   args: Parameters<RemoteModel[keyof RemoteModel]>
 }
 
