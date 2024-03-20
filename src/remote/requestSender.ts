@@ -5,13 +5,13 @@ import { type AutoRetryOptions, type SentMessageStore } from "./types"
 type RequestMessage<RemoteModel extends Model> = {
   id: string
   type: "request"
-  prop: keyof RemoteModel
+  procedure: keyof RemoteModel
   args: Parameters<RemoteModel[keyof RemoteModel]>
 }
 
 const requestSender = <RemoteModel extends Model>(
   sentMessagesStore: SentMessageStore<RemoteModel>,
-  target: Window,
+  remote: Window,
   origin: string,
   options?: AutoRetryOptions,
 ) => {
@@ -61,7 +61,7 @@ const requestSender = <RemoteModel extends Model>(
       message,
       acknowledged: false,
       promise: exposedPromise,
-      target,
+      remote,
     })
 
     return exposedPromise
@@ -78,13 +78,13 @@ const requestSender = <RemoteModel extends Model>(
       message as RequestMessage<RemoteModel>,
     )
 
-    if (origin === "*" || origin === target.origin) {
+    if (origin === "*" || origin === remote.origin) {
       sendRequest(message)
       autoRetry(message.id, exposedPromise.reject, options)
     } else {
       exposedPromise.reject(
         new Error(
-          `The target window's origin "${target.origin}" does not match the specified origin "${origin}". The request was aborted before sending.`,
+          `The remote window's origin "${remote.origin}" does not match the specified origin "${origin}". The request was aborted before sending.`,
         ),
       )
     }
@@ -93,7 +93,7 @@ const requestSender = <RemoteModel extends Model>(
   }
 
   const sendRequest = (message: RequestMessage<RemoteModel>) => {
-    target.postMessage(message, origin)
+    remote.postMessage(message, origin)
   }
 
   return sendNewRequest

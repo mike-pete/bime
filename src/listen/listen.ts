@@ -17,16 +17,16 @@ type AckMessage = {
   type: "ack"
 }
 
-const listen = (origin: string | string[], model: Model) => {
+const listen = (model: Model, origin: string | string[]) => {
   let cleanedUp = false
 
   if ("cleanup" in model) {
     console.warn(
-      '"cleanup" is a reserved property name and cannot be used on the model.',
+      '"cleanup" is a reserved name and cannot be used on the model.',
     )
   }
 
-  const handler = invokeHandler(origin, model)
+  const handler = callHandler(origin, model)
   window.addEventListener("message", handler)
 
   return {
@@ -40,23 +40,28 @@ const listen = (origin: string | string[], model: Model) => {
   }
 }
 
-const invokeHandler =
+const callHandler =
   (origin: string | string[], model: Model) => (event: MessageEvent) => {
     if (origin !== "*") {
-      if (Array.isArray(origin) && !origin.includes(event.origin)) return
-      else if (origin !== event.origin) return
+      if (typeof origin === "string") {
+        if (origin !== event.origin) return
+      } else if (Array.isArray(origin)) {
+        if (!origin.includes(event.origin)) return
+      } else {
+        return
+      }
     }
 
     const {
       id,
-      prop,
+      procedure,
       args,
       type,
-    }: { id: string; prop: string; args: any[]; type: string } = event.data
+    }: { id: string; procedure: string; args: any[]; type: string } = event.data
 
     if (typeof id !== "string" || id === "") return
     if (type !== "request") return
-    if (typeof prop !== "string" || prop === "") return
+    if (typeof procedure !== "string" || procedure === "") return
 
     sendResponse(
       { id: event.data.id, type: "ack" },
@@ -64,9 +69,9 @@ const invokeHandler =
       event.origin,
     )
 
-    if (typeof model[prop] !== "function") {
+    if (typeof model[procedure] !== "function") {
       const error = new ReferenceError(
-        `Invalid property "${prop}" is not a function on the model`,
+        `"${procedure}" is not a procedure on the model`,
       )
       sendResponse(
         { id: event.data.id, type: "error", error },
@@ -78,7 +83,7 @@ const invokeHandler =
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const invocationResult = model[prop](...args)
+      const invocationResult = model[procedure](...args)
 
       if (invocationResult instanceof Promise) {
         invocationResult
@@ -114,10 +119,10 @@ const invokeHandler =
 
 const sendResponse = <LocalModel extends Model>(
   message: AckMessage | ResponseMessage<LocalModel> | ErrorMessage,
-  target: Window,
+  remote: Window,
   origin: string,
 ) => {
-  target.postMessage(message, origin)
+  remote.postMessage(message, origin)
 }
 
 export default listen

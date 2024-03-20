@@ -27,7 +27,7 @@ const messageHandler =
     const sentMessage = sentMessagesStore.get(id)
     if (sentMessage === undefined) return
 
-    if (event.source !== sentMessage.target) return
+    if (event.source !== sentMessage.remote) return
 
     switch (type) {
       case "response":

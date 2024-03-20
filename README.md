@@ -1,6 +1,6 @@
 # Bime
 
-A simple, bi-directional, promise-based [postMessage](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) library.
+A simple, bi-directional, promise-based [postMessage](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) library (RPC for iframes).
 
 ## Features
 
@@ -23,19 +23,19 @@ const increment = () => ++count
 const decrement = () => --count
 const setCount = (newCount: number) => (count = newCount)
 
-// expose functions for other windows to invoke
+// expose functions for other windows to call
 const model = { increment, decrement, setCount }
 
 // listen for invocations
-const listener = bime.listen(model)
+const listener = bime.listen(model, "*")
 
 // stop listening when you're done
 listener.cleanup()
 ```
 
-## Invoke Remote Functions
+## Call Remote Functions
 
-Remotely invoke functions exposed by another window:
+Call remote functions exposed by another window:
 
 ```ts
 type RemoteModel = {
@@ -45,25 +45,19 @@ type RemoteModel = {
 }
 
 // get a reference to the iframe we want to talk to
-const targetWindow = (document.getElementById("iframe") as HTMLIFrameElement)
+const remoteWindow = (document.getElementById("iframe") as HTMLIFrameElement)
   .contentWindow as Window
 
-// get ready to invoke remote functions and listen for responses
-const target = bime.target<RemoteModel>(targetWindow)
+// get ready to call remote functions and listen for responses
+const remote = bime.remote<RemoteModel>(remoteWindow, "*")
 
-// invoke remote function
-target.setCount(5)
+// call remote function
+remote.setCount(5)
 
-// invoke remote function and get a response
-const newCount = await target.increment()
+// call remote function and get a response
+const newCount = await remote.increment()
 console.log(newCount) // 6
 
 // stop listening for responses when you're done
-target.cleanup()
+remote.cleanup()
 ```
-
-## Inspiration
-
-### Dollar Shave Club's [Postmate](https://github.com/dollarshaveclub/postmate)
-
-I quite like the model-based approach of Postmate, but I need to talk to windows that aren't iframes.
