@@ -1,8 +1,8 @@
 import listen from "./listen/listen"
-import target from "./target/target"
+import remote from "./remote/remote"
 
 export type Model = Record<string, (...args: any[]) => any>
 
-const bime = { listen, target }
+const bime = { listen, remote }
 
 export default bime

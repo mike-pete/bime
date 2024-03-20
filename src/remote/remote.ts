@@ -9,19 +9,19 @@ type MessageResponse<RemoteModel> = {
     : never
 }
 
-type Target<RemoteModel extends Model> = MessageResponse<RemoteModel> & {
+type Remote<RemoteModel extends Model> = MessageResponse<RemoteModel> & {
   cleanup: () => void
 }
 
-const target = <RemoteModel extends Model>(
-  target: Window,
+const remote = <RemoteModel extends Model>(
+  remote: Window,
   origin: string,
   options?: AutoRetryOptions,
 ) => {
   const sentMessagesStore: SentMessageStore<RemoteModel> = new Map()
   const sendRequest = requestSender<RemoteModel>(
     sentMessagesStore,
-    target,
+    remote,
     origin,
     options,
   )
@@ -29,7 +29,7 @@ const target = <RemoteModel extends Model>(
 
   let cleanedUp = false
 
-  const handler: ProxyHandler<Target<RemoteModel>> = {
+  const handler: ProxyHandler<Remote<RemoteModel>> = {
     get: (_, prop: string) => {
       if (prop === "cleanup") {
         return () => {
@@ -54,7 +54,7 @@ const target = <RemoteModel extends Model>(
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Proxy<Target<RemoteModel>>({} as Target<RemoteModel>, handler)
+  return new Proxy<Remote<RemoteModel>>({} as Remote<RemoteModel>, handler)
 }
 
-export default target
+export default remote

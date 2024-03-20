@@ -114,10 +114,10 @@ const callHandler =
 
 const sendResponse = <LocalModel extends Model>(
   message: AckMessage | ResponseMessage<LocalModel> | ErrorMessage,
-  target: Window,
+  remote: Window,
   origin: string,
 ) => {
-  target.postMessage(message, origin)
+  remote.postMessage(message, origin)
 }
 
 export default listen

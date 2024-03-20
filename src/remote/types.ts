@@ -23,7 +23,7 @@ export type SentMessageStore<RemoteModel extends Model> = Map<
     message: RequestMessage<RemoteModel>
     acknowledged: boolean
     promise: ExposedMessagePromise<ReturnType<RemoteModel[keyof RemoteModel]>>
-    target: Window
+    remote: Window
   }
 >
 
