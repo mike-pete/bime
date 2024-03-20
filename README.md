@@ -27,7 +27,7 @@ const setCount = (newCount: number) => (count = newCount)
 const model = { increment, decrement, setCount }
 
 // listen for invocations
-const listener = bime.listen(model)
+const listener = bime.listen(model, '*')
 
 // stop listening when you're done
 listener.cleanup()

@@ -17,7 +17,7 @@ type AckMessage = {
   type: "ack"
 }
 
-const listen = (origin: string | string[], model: Model) => {
+const listen = (model: Model, origin: string | string[]) => {
   let cleanedUp = false
 
   if ("cleanup" in model) {
