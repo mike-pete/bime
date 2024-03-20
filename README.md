@@ -27,7 +27,7 @@ const setCount = (newCount: number) => (count = newCount)
 const model = { increment, decrement, setCount }
 
 // listen for invocations
-const listener = bime.listen(model, '*')
+const listener = bime.listen(model, "*")
 
 // stop listening when you're done
 listener.cleanup()
@@ -49,7 +49,7 @@ const remoteWindow = (document.getElementById("iframe") as HTMLIFrameElement)
   .contentWindow as Window
 
 // get ready to call remote functions and listen for responses
-const remote = bime.remote<RemoteModel>(remoteWindow)
+const remote = bime.remote<RemoteModel>(remoteWindow, "*")
 
 // call remote function
 remote.setCount(5)
