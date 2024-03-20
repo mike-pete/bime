@@ -37,5 +37,8 @@
     "prettier-plugin-organize-imports": "^3.2.4",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "rollup": "^4.13.0"
   }
 }
