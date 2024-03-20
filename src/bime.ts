@@ -1,4 +1,4 @@
-import listen from "./listen/invokeHandler"
+import listen from "./listen/listen"
 import target from "./target/target"
 
 export type Model = Record<string, (...args: any[]) => any>

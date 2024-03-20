@@ -26,7 +26,7 @@ const listen = (origin: string | string[], model: Model) => {
     )
   }
 
-  const handler = invokeHandler(origin, model)
+  const handler = callHandler(origin, model)
   window.addEventListener("message", handler)
 
   return {
@@ -40,7 +40,7 @@ const listen = (origin: string | string[], model: Model) => {
   }
 }
 
-const invokeHandler =
+const callHandler =
   (origin: string | string[], model: Model) => (event: MessageEvent) => {
     if (origin !== "*") {
       if (Array.isArray(origin) && !origin.includes(event.origin)) return
