@@ -43,8 +43,13 @@ const listen = (model: Model, origin: string | string[]) => {
 const callHandler =
   (origin: string | string[], model: Model) => (event: MessageEvent) => {
     if (origin !== "*") {
-      if (Array.isArray(origin) && !origin.includes(event.origin)) return
-      else if (origin !== event.origin) return
+      if (typeof origin === "string") {
+        if (origin !== event.origin) return
+      } else if (Array.isArray(origin)) {
+        if (!origin.includes(event.origin)) return
+      } else {
+        return
+      }
     }
 
     const {
