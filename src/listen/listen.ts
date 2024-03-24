@@ -61,7 +61,6 @@ const callHandler =
 
     if (typeof id !== "string" || id === "") return
     if (type !== "request") return
-    if (typeof procedure !== "string" || procedure === "") return
 
     sendResponse(
       { id: event.data.id, type: "ack" },
