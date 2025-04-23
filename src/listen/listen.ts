@@ -1,42 +1,22 @@
-import { type Model } from "../bime"
+import {
+  type AckMessage,
+  type ErrorMessage,
+  type InvocationMessage,
+  type MessageListenerWithCleanup,
+  type MessageSender,
+  type ModelType,
+  type ResponseMessage,
+} from "../types"
 
-type ResponseMessage<T extends Model> = {
-  id: string
-  type: "response"
-  data: ReturnType<T[keyof T]> | "acknowledged"
-}
-
-type ErrorMessage = {
-  id: string
-  type: "error"
-  error: Error
-}
-
-type AckMessage = {
-  id: string
-  type: "ack"
-}
-
-type MessageListener = (handler: (message: MessageEvent) => void) => () => void
-
-// TODO: move this to new file
-const postMessageListener: MessageListener = (
-  handler: (message: MessageEvent) => void,
-) => {
-  window.addEventListener("message", handler)
-
-  const cleanup = () => {
-    window.removeEventListener("message", handler)
-  }
-
-  return cleanup
-}
-
-const listen = (
-  model: Model,
-  origin: string | string[],
-  messageListener: MessageListener = postMessageListener,
-) => {
+export default function listen<Model extends ModelType>({
+  model,
+  listener,
+  sender,
+}: {
+  model: Model
+  listener: MessageListenerWithCleanup
+  sender: MessageSender
+}) {
   let cleanedUp = false
 
   if ("cleanup" in model) {
@@ -45,8 +25,8 @@ const listen = (
     )
   }
 
-  const handler = callHandler(origin, model)
-  const cleanup = messageListener(handler)
+  const handler = callHandler(model, sender)
+  const cleanup = listener(handler)
 
   return {
     cleanup: () => {
@@ -60,43 +40,34 @@ const listen = (
 }
 
 const callHandler =
-  (origin: string | string[], model: Model) => (event: MessageEvent) => {
-    // TODO: move this to postMessageListener
-    if (origin !== "*") {
-      if (typeof origin === "string") {
-        if (origin !== event.origin) return
-      } else if (Array.isArray(origin)) {
-        if (!origin.includes(event.origin)) return
-      } else {
-        return
-      }
+  <Model extends ModelType>(model: Model, sender: MessageSender) =>
+  (messageString: string) => {
+    console.log("messageString", messageString)
+    const message = JSON.parse(messageString)
+
+    const sendResponse = <Model extends ModelType>(
+      message: AckMessage | ResponseMessage<Model> | ErrorMessage,
+    ) => {
+      sender(JSON.stringify(message))
     }
 
-    const {
-      id,
-      procedure,
-      args,
-      type,
-    }: { id: string; procedure: string; args: any[]; type: string } = event.data
+    if (typeof message.id !== "string" || message.id === "") return
+    if (message.type !== "invocation") return
+    if (typeof message.procedure !== "string" || message.procedure === "")
+      return
 
-    if (typeof id !== "string" || id === "") return
-    if (type !== "request") return
+    const { id, procedure, args }: InvocationMessage<Model> = {
+      ...message,
+      args: message?.args ?? [],
+    }
 
-    sendResponse(
-      { id: event.data.id, type: "ack" },
-      event.source as Window,
-      event.origin,
-    )
+    sendResponse({ id, type: "ack" })
 
     if (typeof model[procedure] !== "function") {
       const error = new ReferenceError(
-        `"${procedure}" is not a procedure on the model`,
+        `"${String(procedure)}" is not a procedure on the model`,
       )
-      sendResponse(
-        { id: event.data.id, type: "error", error },
-        event.source as Window,
-        event.origin,
-      )
+      sendResponse({ id, type: "error", error })
       return
     }
 
@@ -107,41 +78,19 @@ const callHandler =
       if (invocationResult instanceof Promise) {
         invocationResult
           .then((data) => {
-            sendResponse(
-              { id: event.data.id, type: "response", data },
-              event.source as Window,
-              event.origin,
-            )
+            sendResponse({ id, type: "response", data })
           })
           .catch((error) => {
-            sendResponse(
-              { id: event.data.id, type: "error", error },
-              event.source as Window,
-              event.origin,
-            )
+            sendResponse({ id, type: "error", error })
           })
       } else {
-        sendResponse(
-          { id: event.data.id, type: "response", data: invocationResult },
-          event.source as Window,
-          event.origin,
-        )
+        sendResponse({
+          id,
+          type: "response",
+          data: invocationResult,
+        })
       }
     } catch (error) {
-      sendResponse(
-        { id: event.data.id, type: "error", error: error as Error },
-        event.source as Window,
-        event.origin,
-      )
+      sendResponse({ id, type: "error", error: error as Error })
     }
   }
-
-const sendResponse = <LocalModel extends Model>(
-  message: AckMessage | ResponseMessage<LocalModel> | ErrorMessage,
-  remote: Window,
-  origin: string,
-) => {
-  remote.postMessage(message, origin)
-}
-
-export default listen

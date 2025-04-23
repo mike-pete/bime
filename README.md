@@ -1,6 +1,6 @@
 # Bime
 
-A simple, bi-directional, promise-based [postMessage](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) library (RPC for iframes).
+A simple promise-based RPC library.
 
 ## Features
 
@@ -8,10 +8,6 @@ A simple, bi-directional, promise-based [postMessage](https://developer.mozilla.
 - Easily expose functions to be called remotely
 - Promise-based
 - Model-driven
-- Bi-directional communication
-- Message acknowledgement and automatic retry when an acknowledgement is not received
-- Zero dependencies
-- Origin validation
 
 ## Listen for Invocations
 

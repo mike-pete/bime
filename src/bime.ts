@@ -1,8 +1,6 @@
+import invoke from "./invoke/invoke"
 import listen from "./listen/listen"
-import remote from "./remote/remote"
 
-export type Model = Record<string, (...args: any[]) => any>
-
-const bime = { listen, remote }
+const bime = { listen, invoke }
 
 export default bime
