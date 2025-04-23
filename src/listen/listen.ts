@@ -17,7 +17,26 @@ type AckMessage = {
   type: "ack"
 }
 
-const listen = (model: Model, origin: string | string[]) => {
+type MessageListener = (handler: (message: MessageEvent) => void) => () => void
+
+// TODO: move this to new file
+const postMessageListener: MessageListener = (
+  handler: (message: MessageEvent) => void,
+) => {
+  window.addEventListener("message", handler)
+
+  const cleanup = () => {
+    window.removeEventListener("message", handler)
+  }
+
+  return cleanup
+}
+
+const listen = (
+  model: Model,
+  origin: string | string[],
+  messageListener: MessageListener = postMessageListener,
+) => {
   let cleanedUp = false
 
   if ("cleanup" in model) {
@@ -27,7 +46,7 @@ const listen = (model: Model, origin: string | string[]) => {
   }
 
   const handler = callHandler(origin, model)
-  window.addEventListener("message", handler)
+  const cleanup = messageListener(handler)
 
   return {
     cleanup: () => {
@@ -35,13 +54,14 @@ const listen = (model: Model, origin: string | string[]) => {
         throw new Error("The listener has been cleaned up.")
       }
       cleanedUp = true
-      window.removeEventListener("message", handler)
+      cleanup()
     },
   }
 }
 
 const callHandler =
   (origin: string | string[], model: Model) => (event: MessageEvent) => {
+    // TODO: move this to postMessageListener
     if (origin !== "*") {
       if (typeof origin === "string") {
         if (origin !== event.origin) return
