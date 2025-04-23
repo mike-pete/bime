@@ -67,6 +67,12 @@ export default class SentMessageStore<Model extends ModelType> {
     promise.reject(error)
   }
 
+  isAcknowledged(id: string) {
+    const message = this.#store.get(id)
+    if (message === undefined) return false
+    return message.acknowledged
+  }
+
   clear() {
     this.#store.clear()
   }
