@@ -9,10 +9,12 @@ function createEvent() {
   const listener = (handler: (message: string) => void) => {
     event.on(id, handler)
 
-    return () => {
+    const cleanup = () => {
       event.off(id, handler)
       cleanupMock()
     }
+
+    return cleanup
   }
 
   const sender = (message: string) => {
@@ -25,18 +27,29 @@ function createEvent() {
     cleanupMock,
   }
 }
-test("example test", async () => {
-  const { listener, sender, cleanupMock } = createEvent()
 
+function createInstance<Model extends Record<string, (...args: any[]) => any>>(
+  model: Model,
+) {
+  const { listener, sender, cleanupMock } = createEvent()
+  const listen = bime.listen({ model, listener, sender })
+  const invoke = bime.invoke<Model>({ listener, sender })
+
+  return {
+    listen,
+    invoke,
+    cleanupMock,
+  }
+}
+
+test("example test", async () => {
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
     print: (message: string) => {
       console.log(message)
     },
   }
-
-  const listen = bime.listen({ model, listener, sender })
-  const invoke = bime.invoke<typeof model>({ listener, sender })
+  const { listen, invoke, cleanupMock } = createInstance(model)
 
   expect(await invoke.sayHello("Bime")).toEqual("Hello Bime")
 

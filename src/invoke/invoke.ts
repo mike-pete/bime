@@ -3,9 +3,8 @@ import type {
   MessageListenerWithCleanup,
   MessageSender,
   ModelType,
-  SentMessageStore,
 } from "../types"
-import createExposedPromise from "../utils/createExposedPromise"
+import SentMessageStore from "./SentMessageStore"
 
 type MessageResponse<RemoteModel> = {
   [K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R
@@ -24,7 +23,7 @@ export default function invoke<Model extends ModelType>({
   listener: MessageListenerWithCleanup
   sender: MessageSender
 }) {
-  const sentMessagesStore: SentMessageStore<Model> = new Map()
+  const sentMessagesStore = new SentMessageStore<Model>()
 
   let cleanedUp = false
 
@@ -32,32 +31,18 @@ export default function invoke<Model extends ModelType>({
     procedure: keyof Model,
     ...args: Parameters<Model[keyof Model]>
   ) => {
-    const messageId = (() => {
-      let id = crypto.randomUUID()
-      while (sentMessagesStore.has(id)) {
-        id = crypto.randomUUID()
-      }
-      return id
-    })()
-    
+    const { id, promise } = sentMessagesStore.add()
+
     const message: InvocationMessage<Model> = {
-      id: messageId,
+      id,
       type: "invocation",
       procedure,
       args,
     }
 
-    const exposedPromise =
-      createExposedPromise<ReturnType<Model[keyof Model]>>()
-
-    sentMessagesStore.set(messageId, {
-      acknowledged: false,
-      promise: exposedPromise,
-    })
-
     sender(JSON.stringify(message))
 
-    return await exposedPromise.promise
+    return await promise
   }
 
   const messageHandler = (messageString: string) => {
@@ -65,28 +50,17 @@ export default function invoke<Model extends ModelType>({
     const { id, type, data, error } = message
 
     if (typeof id !== "string" || id.length === 0) return
-    const sentMessage = sentMessagesStore.get(id)
-    const { promise } = sentMessage ?? {}
 
-    if (sentMessage !== undefined && promise !== undefined) {
-      switch (type) {
-        case "ack":
-          sentMessagesStore.set(id, {
-            promise,
-            acknowledged: true,
-          })
-          break
-        case "response":
-          sentMessagesStore.set(id, {
-            promise,
-            acknowledged: true,
-          })
-          promise.resolve(data)
-          break
-        case "error":
-          promise.reject(error)
-          break
-      }
+    switch (type) {
+      case "ack":
+        sentMessagesStore.acknowledge(id)
+        break
+      case "response":
+        sentMessagesStore.resolve(id, data)
+        break
+      case "error":
+        sentMessagesStore.reject(id, error)
+        break
     }
   }
   const listenerCleanup = listener(messageHandler)

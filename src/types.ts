@@ -1,5 +1,3 @@
-import type { RejectType, ResolveType } from "./utils/createExposedPromise"
-
 export type ModelType = Record<string, (...args: any[]) => any>
 
 export type MessageListenerWithCleanup = (
@@ -8,14 +6,6 @@ export type MessageListenerWithCleanup = (
 
 export type MessageSender = (message: string) => void
 
-export type SentMessageStore<RemoteModel extends ModelType> = Map<
-  string,
-  {
-    acknowledged: boolean
-    promise: ExposedMessagePromise<ReturnType<RemoteModel[keyof RemoteModel]>>
-  }
->
-
 // OLD
 
 export type InvocationMessage<RemoteModel extends ModelType> = {
@@ -23,15 +13,6 @@ export type InvocationMessage<RemoteModel extends ModelType> = {
   type: "invocation"
   procedure: keyof RemoteModel
   args: Parameters<RemoteModel[keyof RemoteModel]>
-}
-type ResolveData<RemoteModel extends ModelType> = ReturnType<
-  RemoteModel[keyof RemoteModel]
->
-
-type ExposedMessagePromise<RemoteModel extends ModelType> = {
-  promise: Promise<ResolveData<RemoteModel>>
-  resolve: ResolveType<ResolveData<RemoteModel>>
-  reject: RejectType
 }
 
 export type ResponseMessage<T extends ModelType> = {
