@@ -32,9 +32,16 @@ export default function invoke<Model extends ModelType>({
     procedure: keyof Model,
     ...args: Parameters<Model[keyof Model]>
   ) => {
-    const messageId = crypto.randomUUID()
+    const messageId = (() => {
+      let id = crypto.randomUUID()
+      while (sentMessagesStore.has(id)) {
+        id = crypto.randomUUID()
+      }
+      return id
+    })()
+    
     const message: InvocationMessage<Model> = {
-      id: messageId, // TODO: collision prevention
+      id: messageId,
       type: "invocation",
       procedure,
       args,
@@ -55,7 +62,7 @@ export default function invoke<Model extends ModelType>({
 
   const messageHandler = (messageString: string) => {
     const message = JSON.parse(messageString)
-    const { id, type, data, error } = message ?? {}
+    const { id, type, data, error } = message
 
     if (typeof id !== "string" || id.length === 0) return
     const sentMessage = sentMessagesStore.get(id)
@@ -85,6 +92,7 @@ export default function invoke<Model extends ModelType>({
   const listenerCleanup = listener(messageHandler)
   const cleanup = () => {
     cleanedUp = true
+    console.log("cleaning up")
     listenerCleanup()
     sentMessagesStore.clear()
   }
