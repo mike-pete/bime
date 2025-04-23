@@ -1,4 +1,5 @@
-- [ ] dependency injection for message listener
-- [ ] dependency injection for message sender
+- [x] dependency injection for message listener
+- [x] dependency injection for message sender
 - [ ] move listener and sender to new files
 - [ ] origin validation for postMessage
+- [ ] add auto retry

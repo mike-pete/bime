@@ -6,8 +6,6 @@ export type MessageListenerWithCleanup = (
 
 export type MessageSender = (message: string) => void
 
-// OLD
-
 export type InvocationMessage<RemoteModel extends ModelType> = {
   id: string
   type: "invocation"
@@ -31,20 +29,6 @@ export type AckMessage = {
   id: string
   type: "ack"
 }
-
-export type InvocationListener<RemoteModel extends ModelType> = (
-  handler: (
-    message: InvocationMessage<RemoteModel> | AckMessage | ErrorMessage,
-  ) => void,
-) => () => void
-
-export type ResponseListener<RemoteModel extends ModelType> = (
-  handler: (message: ResponseMessage<RemoteModel>) => void,
-) => () => void
-
-// export type MessageSender<RemoteModel extends ModelType> = (
-//   message: InvocationMessage<RemoteModel> | AckMessage | ErrorMessage,
-// ) => void
 
 export type AutoRetryOptions = {
   timeout: number
