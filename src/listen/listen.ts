@@ -42,7 +42,6 @@ export default function listen<Model extends ModelType>({
 const callHandler =
   <Model extends ModelType>(model: Model, sender: MessageSender) =>
   (messageString: string) => {
-    console.log("messageString", messageString)
     const message = JSON.parse(messageString)
 
     const sendResponse = <Model extends ModelType>(

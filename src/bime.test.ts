@@ -1,53 +1,45 @@
 import { expect, test } from "bun:test"
 import { EventEmitter } from "node:events"
 import bime from "./bime"
-test("example test", async () => {
+
+function createEvent() {
+  const id = crypto.randomUUID()
   const event = new EventEmitter()
+  const listener = (handler: (message: string) => void) => {
+    event.on(id, handler)
 
-  //   event.on("message", (message) => {
-  //     console.log(`${message}`)
-  //   })
+    return () => {
+      event.off(id, handler)
+    }
+  }
 
-  //   event.emit("message", "hello world")
+  const sender = (message: string) => {
+    event.emit(id, message)
+  }
+
+  return {
+    listener,
+    sender,
+  }
+}
+test("example test", async () => {
+  const { listener, sender } = createEvent()
 
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
   }
 
-  const messageListener = (handler: (message: string) => void) => {
-    event.on("message", handler)
+  const listen = bime.listen({ model, listener, sender })
+  const invoke = bime.invoke<typeof model>({ listener, sender })
 
-    return () => {
-      event.off("message", handler)
-    }
-  }
+  expect(await invoke.sayHello("Bime")).toEqual("Hello Bime")
 
-  const messageSender = (message: string) => {
-    event.emit("message", message)
-  }
+  // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
+  expect(() => invoke.notDefined()).toThrow()
 
-  const listen = bime.listen({
-    model, 
-    listener: messageListener,
-    sender: messageSender,
-  })
-
-  const invoke = bime.invoke<typeof model>({
-    listener: messageListener,
-    sender: messageSender,
-  })
-
-  const result = await invoke.sayHello("Bime")
-
-  expect(result).toEqual("Hello Bime")
-
-  console.log(result)
+  expect(listen.cleanup).toBeDefined()
+  expect(invoke.cleanup).toBeDefined()
 
   listen.cleanup()
   invoke.cleanup()
-
-  // const result = await remote.sayHello("Bime")z
-  // expect(result).toEqual("Hello Bime")
-
-  // listener.cleanup()
 })

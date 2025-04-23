@@ -54,7 +54,6 @@ export default function invoke<Model extends ModelType>({
   }
 
   const messageHandler = (messageString: string) => {
-    console.log("message", messageString)
     const message = JSON.parse(messageString)
     const { id, type, data, error } = message ?? {}
 
