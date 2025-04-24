@@ -50,6 +50,9 @@ test("happy path message passing works", async () => {
     },
     sum: (a: number, b: number) => a + b,
     isEven: (n: number) => n % 2 === 0,
+    willThrow: () => {
+      throw new Error("This is a test error")
+    },
   }
   const { invoke } = createInstance(model)
 
@@ -61,6 +64,31 @@ test("happy path message passing works", async () => {
   expect(await invoke.sum(1, 2)).toEqual(3)
   expect(await invoke.isEven(2)).toEqual(true)
   expect(await invoke.isEven(3)).toEqual(false)
+  expect(
+    (async () => {
+      return invoke.willThrow()
+    })(),
+  ).rejects.toThrow("This is a test error")
+})
+
+test("cannot use 'cleanup' as a model method", async () => {
+  const model = {
+    cleanup: () => {
+      console.log("cleanup")
+    },
+  }
+
+  expect(() =>
+    bime.listen({
+      model,
+      listener: (handler: (message: string) => void) => () => {},
+      sender: () => {},
+    }),
+  ).toThrow(
+    new ReferenceError(
+      '"cleanup" is a reserved name and cannot be used on the model.',
+    ),
+  )
 })
 
 test("listen cleanup works", async () => {

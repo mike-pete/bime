@@ -28,9 +28,7 @@ export default function listen<Model extends ModelType>({
   let cleanedUp = false
 
   if ("cleanup" in model) {
-    console.warn(
-      '"cleanup" is a reserved name and cannot be used on the model.',
-    )
+    throw new Error('"cleanup" is a reserved name and cannot be used on the model.')
   }
 
   const handler = callHandler(model, sender)
