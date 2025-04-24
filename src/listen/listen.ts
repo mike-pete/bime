@@ -1,12 +1,20 @@
 import {
   type AckMessage,
   type ErrorMessage,
-  type InvocationMessage,
   type MessageListenerWithCleanup,
   type MessageSender,
   type ModelType,
   type ResponseMessage,
 } from "../types"
+
+import { z } from "zod"
+
+export const invocationMessageSchema = z.object({
+  id: z.string(),
+  type: z.enum(["invocation"]),
+  procedure: z.string().min(1),
+  args: z.array(z.any()),
+})
 
 export default function listen<Model extends ModelType>({
   model,
@@ -44,20 +52,15 @@ const callHandler =
   (messageString: string) => {
     const message = JSON.parse(messageString)
 
+    const { success, data } = invocationMessageSchema.safeParse(message)
+
+    if (!success) return
+    const { id, procedure, args } = data
+
     const sendResponse = <Model extends ModelType>(
       message: AckMessage | ResponseMessage<Model> | ErrorMessage,
     ) => {
       sender(JSON.stringify(message))
-    }
-
-    if (typeof message.id !== "string" || message.id === "") return
-    if (message.type !== "invocation") return
-    if (typeof message.procedure !== "string" || message.procedure === "")
-      return
-
-    const { id, procedure, args }: InvocationMessage<Model> = {
-      ...message,
-      args: message?.args ?? [],
     }
 
     sendResponse({ id, type: "ack" })

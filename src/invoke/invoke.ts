@@ -66,7 +66,6 @@ export default function invoke<Model extends ModelType>({
   const listenerCleanup = listener(messageHandler)
   const cleanup = () => {
     cleanedUp = true
-    console.log("cleaning up")
     listenerCleanup()
     sentMessagesStore.clear()
   }

@@ -37,10 +37,9 @@
     "eslint-plugin-promise": "^6.1.1",
     "prettier": "3.2.4",
     "prettier-plugin-organize-imports": "^3.2.4",
+    "rollup": "^4.13.0",
     "tslib": "^2.6.2",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "rollup": "^4.13.0"
+    "typescript": "^5.3.3",
+    "zod": "^3.24.3"
   }
 }

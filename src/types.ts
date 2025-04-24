@@ -1,3 +1,6 @@
+import { type z } from "zod"
+import { type invocationMessageSchema } from "./listen/listen"
+
 export type ModelType = Record<string, (...args: any[]) => any>
 
 export type MessageListenerWithCleanup = (
@@ -6,9 +9,12 @@ export type MessageListenerWithCleanup = (
 
 export type MessageSender = (message: string) => void
 
-export type InvocationMessage<RemoteModel extends ModelType> = {
-  id: string
-  type: "invocation"
+type InvocationMessageSchema = z.infer<typeof invocationMessageSchema>
+
+export type InvocationMessage<RemoteModel extends ModelType> = Omit<
+  InvocationMessageSchema,
+  "procedure" | "args"
+> & {
   procedure: keyof RemoteModel
   args: Parameters<RemoteModel[keyof RemoteModel]>
 }
