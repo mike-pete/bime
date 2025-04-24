@@ -1,5 +1,7 @@
 - [x] dependency injection for message listener
 - [x] dependency injection for message sender
-- [ ] move listener and sender to new files
-- [ ] origin validation for postMessage
 - [ ] add auto retry
+- [ ] create listeners and senders for iframes
+- [ ] clean up types
+- [ ] origin validation for postMessage
+- [ ] create listeners and senders for web workers
