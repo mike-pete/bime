@@ -53,6 +53,12 @@ test("happy path message passing works", async () => {
     willThrow: () => {
       throw new Error("This is a test error")
     },
+    async asyncResolve() {
+      return await Promise.resolve("Hello")
+    },
+    async asyncReject() {
+      return await Promise.reject(new Error("This is a test async error"))
+    },
   }
   const { invoke } = createInstance(model)
 
@@ -69,6 +75,20 @@ test("happy path message passing works", async () => {
       return invoke.willThrow()
     })(),
   ).rejects.toThrow("This is a test error")
+  expect(await invoke.asyncResolve()).toEqual("Hello")
+  expect(async () => {
+    await invoke.asyncReject()
+  }).toThrow("This is a test async error")
+})
+
+test("non-existent model methods throw errors", async () => {
+  const model = {}
+  const { invoke } = createInstance(model)
+
+  // @ts-expect-error - This should throw an error
+  expect(() => invoke.doesNotExist()).toThrow(
+    new ReferenceError('"doesNotExist" is not a procedure on the model'),
+  )
 })
 
 test("cannot use 'cleanup' as a model method", async () => {
