@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type {
   InvocationMessage,
   MessageListenerWithCleanup,
@@ -47,22 +48,46 @@ export default function invoke<Model extends ModelType>({
 
   const messageHandler = (messageString: string) => {
     const message = JSON.parse(messageString)
-    const { id, type, data, error } = message
 
-    if (typeof id !== "string" || id.length === 0) return
+    const responseMessageSchema = z.discriminatedUnion("type", [
+      z.object({
+        id: z.string().min(1),
+        type: z.literal("response"),
+        data: z.any(),
+      }),
+      z.object({
+        id: z.string().min(1),
+        type: z.literal("error"),
+        error: z.any(),
+      }),
+      z.object({
+        id: z.string().min(1),
+        type: z.literal("ack"),
+      }),
+    ])
+
+    const { success, data } = responseMessageSchema.safeParse(message)
+
+    if (!success) return
+
+    const { id, type } = data
 
     switch (type) {
       case "ack":
         sentMessagesStore.acknowledge(id)
         break
       case "response":
-        sentMessagesStore.resolve(id, data)
+        sentMessagesStore.resolve(
+          id,
+          data.data as ReturnType<Model[keyof Model]>,
+        )
         break
       case "error":
-        sentMessagesStore.reject(id, error)
+        sentMessagesStore.reject(id, data.error)
         break
     }
   }
+
   const listenerCleanup = listener(messageHandler)
   const cleanup = () => {
     cleanedUp = true

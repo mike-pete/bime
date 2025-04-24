@@ -11,7 +11,7 @@ import { z } from "zod"
 
 export const invocationMessageSchema = z.object({
   id: z.string(),
-  type: z.enum(["invocation"]),
+  type: z.literal("invocation"),
   procedure: z.string().min(1),
   args: z.array(z.any()),
 })
