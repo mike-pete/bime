@@ -1,3 +1,4 @@
+import superjson from "superjson"
 import { z } from "zod"
 import type {
   InvocationMessage,
@@ -16,6 +17,24 @@ type MessageResponse<RemoteModel> = {
 type Invoke<RemoteModel extends ModelType> = MessageResponse<RemoteModel> & {
   cleanup: () => void
 }
+
+// TODO: couple this with types
+export const responseMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("response"),
+    data: z.any(),
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("error"),
+    error: z.instanceof(Error),
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("ack"),
+  }),
+])
 
 export default function invoke<Model extends ModelType>({
   listener,
@@ -41,30 +60,13 @@ export default function invoke<Model extends ModelType>({
       args,
     }
 
-    sender(JSON.stringify(message))
+    sender(superjson.stringify(message))
 
     return await promise
   }
 
   const messageHandler = (messageString: string) => {
-    const message = JSON.parse(messageString)
-
-    const responseMessageSchema = z.discriminatedUnion("type", [
-      z.object({
-        id: z.string().min(1),
-        type: z.literal("response"),
-        data: z.any(),
-      }),
-      z.object({
-        id: z.string().min(1),
-        type: z.literal("error"),
-        error: z.any(),
-      }),
-      z.object({
-        id: z.string().min(1),
-        type: z.literal("ack"),
-      }),
-    ])
+    const message = superjson.parse(messageString)
 
     const { success, data } = responseMessageSchema.safeParse(message)
 

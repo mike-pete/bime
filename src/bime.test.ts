@@ -56,11 +56,10 @@ test("example test", async () => {
   // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
   expect(() => invoke.notDefined()).toThrow()
   
-  // TODO: fix errors
-  // // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
-  // expect(() => invoke.notDefined()).toThrow(
-  //   new Error('"notDefined" is not a procedure on the model'),
-  // )
+  // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
+  expect(() => invoke.notDefined()).toThrow(
+    new Error('"notDefined" is not a procedure on the model'),
+  )
 
   expect(async () => {
     await invoke.print("it works!")

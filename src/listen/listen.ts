@@ -1,3 +1,5 @@
+import superjson from "superjson"
+import { z } from "zod"
 import {
   type AckMessage,
   type ErrorMessage,
@@ -6,8 +8,6 @@ import {
   type ModelType,
   type ResponseMessage,
 } from "../types"
-
-import { z } from "zod"
 
 export const invocationMessageSchema = z.object({
   id: z.string(),
@@ -50,7 +50,7 @@ export default function listen<Model extends ModelType>({
 const callHandler =
   <Model extends ModelType>(model: Model, sender: MessageSender) =>
   (messageString: string) => {
-    const message = JSON.parse(messageString)
+    const message = superjson.parse(messageString)
 
     const { success, data } = invocationMessageSchema.safeParse(message)
 
@@ -60,7 +60,7 @@ const callHandler =
     const sendResponse = <Model extends ModelType>(
       message: AckMessage | ResponseMessage<Model> | ErrorMessage,
     ) => {
-      sender(JSON.stringify(message))
+      sender(superjson.stringify(message))
     }
 
     sendResponse({ id, type: "ack" })
