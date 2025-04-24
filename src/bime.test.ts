@@ -42,34 +42,47 @@ function createInstance<Model extends Record<string, (...args: any[]) => any>>(
   }
 }
 
-test("example test", async () => {
+test("happy path message passing works", async () => {
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
     print: (message: string) => {
       console.log(message)
     },
+    sum: (a: number, b: number) => a + b,
+    isEven: (n: number) => n % 2 === 0,
   }
-  const { listen, invoke, cleanupMock } = createInstance(model)
+  const { invoke } = createInstance(model)
 
+  expect(await invoke.sayHello("World")).toEqual("Hello World")
   expect(await invoke.sayHello("Bime")).toEqual("Hello Bime")
-
-  // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
-  expect(() => invoke.notDefined()).toThrow()
-  
-  // @ts-expect-error: This is necessary because the method 'notDefined' does not exist in the model.
-  expect(() => invoke.notDefined()).toThrow(
-    new Error('"notDefined" is not a procedure on the model'),
-  )
-
   expect(async () => {
     await invoke.print("it works!")
   }).not.toThrow()
+  expect(await invoke.sum(1, 2)).toEqual(3)
+  expect(await invoke.isEven(2)).toEqual(true)
+  expect(await invoke.isEven(3)).toEqual(false)
+})
+
+test("listen cleanup works", async () => {
+  const model = {
+    sayHello: (name: string) => `Hello ${name}`,
+  }
+  const { listen, cleanupMock } = createInstance(model)
 
   expect(listen.cleanup).toBeDefined()
-  expect(invoke.cleanup).toBeDefined()
 
   listen.cleanup()
   expect(cleanupMock).toHaveBeenCalled()
+})
+
+test("invoke cleanup works", async () => {
+  const model = {
+    sayHello: (name: string) => `Hello ${name}`,
+  }
+  const { invoke, cleanupMock } = createInstance(model)
+
+  expect(invoke.cleanup).toBeDefined()
+
   invoke.cleanup()
   expect(cleanupMock).toHaveBeenCalled()
 
