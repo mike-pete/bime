@@ -1,0 +1,8 @@
+- [x] dependency injection for message listener
+- [x] dependency injection for message sender
+- [ ] add auto retry
+- [ ] bundle with Bun
+- [ ] create listeners and senders for iframes
+- [ ] clean up types
+- [ ] origin validation for postMessage
+- [ ] create listeners and senders for web workers
