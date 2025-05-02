@@ -1,0 +1,20 @@
+[build]
+entrypoints = ["./src/bime.ts"]
+outdir = "./dist"
+minify = true
+sourcemap = "external"
+target = "node"
+format = "esm"
+
+[build.production]
+minify = true
+
+[build.browser]
+format = "esm"
+target = "web"
+outfile = "bime.browser.js"
+
+[build.node]
+format = "esm"
+target = "node"
+outfile = "bime.js" 

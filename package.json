@@ -1,15 +1,25 @@
 {
   "name": "@mike.pete/bime",
-  "version": "0.01.0",
-  "main": "dist/bime.js",
-  "types": "dist/bime.d.ts",
+  "version": "2.0.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "files": [
-    "/dist"
+    "dist"
   ],
+  "sideEffects": false,
   "scripts": {
-    "dev": "rollup -c -w",
-    "build": "rollup --config",
+    "dev": "bun build ./src/bime.ts --watch",
+    "build": "bun build ./src/bime.ts --outfile ./dist/index.js && bun build ./src/bime.ts --outfile ./dist/index.cjs --format cjs && tsc --emitDeclarationOnly",
+    "prepublishOnly": "bun run build",
     "prettier": "prettier . --write",
     "lint": "eslint 'src/**'",
     "test": "bun test"
@@ -26,7 +36,6 @@
   "homepage": "https://github.com/mike-pete/bime#readme",
   "description": "",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.1.6",
     "@types/bun": "^1.2.10",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "eslint": "^8.56.0",
@@ -37,7 +46,6 @@
     "eslint-plugin-promise": "^6.1.1",
     "prettier": "3.2.4",
     "prettier-plugin-organize-imports": "^3.2.4",
-    "rollup": "^4.13.0",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
     "zod": "^3.24.3"
