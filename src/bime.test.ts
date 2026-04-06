@@ -1,6 +1,6 @@
 import { expect, jest, test } from "bun:test"
 import { EventEmitter } from "node:events"
-import bime from "./bime"
+import { invoke as bimeInvoke, listen as bimeListen } from "./bime"
 
 function createEvent() {
   const id = crypto.randomUUID()
@@ -32,8 +32,8 @@ function createInstance<Model extends Record<string, (...args: any[]) => any>>(
   model: Model,
 ) {
   const { listener, sender, cleanupMock } = createEvent()
-  const listen = bime.listen({ model, listener, sender })
-  const invoke = bime.invoke<Model>({ listener, sender })
+  const listen = bimeListen({ model, listener, sender })
+  const invoke = bimeInvoke<Model>({ listener, sender })
 
   return {
     listen,
@@ -99,7 +99,7 @@ test("cannot use 'cleanup' as a model method", async () => {
   }
 
   expect(() =>
-    bime.listen({
+    bimeListen({
       model,
       listener: (handler: (message: string) => void) => () => {},
       sender: () => {},
