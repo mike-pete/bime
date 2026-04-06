@@ -1,41 +1,41 @@
-import { expect, test } from "bun:test"
-import createExposedPromise from "./createExposedPromise"
+import { expect, test } from 'bun:test'
+import createExposedPromise from './createExposedPromise'
 
-test("should resolve with a value", async () => {
+test('should resolve with a value', async () => {
   const { promise, resolve } = createExposedPromise<string>()
-  resolve("test")
-  expect(promise).resolves.toBe("test")
+  resolve('test')
+  await expect(promise).resolves.toBe('test')
 })
 
-test("should reject with an error", async () => {
+test('should reject with an error', async () => {
   const { promise, reject } = createExposedPromise<string>()
-  const error = new Error("test error")
+  const error = new Error('test error')
   reject(error)
-  expect(promise).rejects.toThrow("test error")
+  await expect(promise).rejects.toThrow('test error')
 })
 
-test("should handle PromiseLike values", async () => {
+test('should handle PromiseLike values', async () => {
   const { promise, resolve } = createExposedPromise<string>()
-  resolve(Promise.resolve("test"))
-  expect(promise).resolves.toBe("test")
+  resolve(Promise.resolve('test'))
+  await expect(promise).resolves.toBe('test')
 })
 
-test("should handle multiple resolutions", async () => {
+test('should handle multiple resolutions', async () => {
   const { promise, resolve } = createExposedPromise<string>()
-  resolve("first")
-  resolve("second") // Should be ignored
-  expect(promise).resolves.toBe("first")
+  resolve('first')
+  resolve('second') // Should be ignored
+  await expect(promise).resolves.toBe('first')
 })
 
-test("should handle multiple rejections", async () => {
+test('should handle multiple rejections', async () => {
   const { promise, reject } = createExposedPromise<string>()
-  reject(new Error("first"))
-  reject(new Error("second")) // Should be ignored
-  expect(promise).rejects.toThrow("first")
+  reject(new Error('first'))
+  reject(new Error('second')) // Should be ignored
+  await expect(promise).rejects.toThrow('first')
 })
 
-test("should handle undefined rejection reason", async () => {
+test('should handle undefined rejection reason', async () => {
   const { promise, reject } = createExposedPromise<string>()
   reject()
-  expect(promise).rejects.toThrow()
+  await expect(promise).rejects.toThrow()
 })

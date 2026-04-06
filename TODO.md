@@ -1,8 +1,9 @@
 - [x] dependency injection for message listener
 - [x] dependency injection for message sender
-- [ ] add auto retry
-- [ ] bundle with Bun
+- [x] bundle with Bun
 - [ ] create listeners and senders for iframes
-- [ ] clean up types
 - [ ] origin validation for postMessage
 - [ ] create listeners and senders for web workers
+- [ ] fix `z.instanceof(Error)` for cross-realm/iframe compatibility
+- [ ] `listen.cleanup()` should notify invoke side about in-flight invocations
+- [ ] use a dedicated error class for "Store was cleared" rejections

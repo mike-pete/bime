@@ -1,5 +1,5 @@
 export type ResolveType<T> = (value: T | PromiseLike<T>) => void
-export type RejectType = (reason?: any) => void
+export type RejectType = (reason?: unknown) => void
 
 const createExposedPromise = <T>() => {
   let resolve!: ResolveType<T>

@@ -1,8 +1,8 @@
-import { expect, jest, test } from "bun:test"
-import { EventEmitter } from "node:events"
-import { invoke as bimeInvoke, listen as bimeListen } from "./bime"
+import { expect, jest, test } from 'bun:test'
+import { EventEmitter } from 'node:events'
+import { invoke as bimeInvoke, listen as bimeListen } from './bime'
 
-function createEvent() {
+function createTransport() {
   const id = crypto.randomUUID()
   const cleanupMock = jest.fn()
   const event = new EventEmitter()
@@ -31,7 +31,7 @@ function createEvent() {
 function createInstance<Model extends Record<string, (...args: any[]) => any>>(
   model: Model,
 ) {
-  const { listener, sender, cleanupMock } = createEvent()
+  const { listener, sender, cleanupMock } = createTransport()
   const listen = bimeListen({ model, listener, sender })
   const invoke = bimeInvoke<Model>({ listener, sender })
 
@@ -42,7 +42,7 @@ function createInstance<Model extends Record<string, (...args: any[]) => any>>(
   }
 }
 
-test("happy path message passing works", async () => {
+test('happy path message passing works', async () => {
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
     print: (message: string) => {
@@ -51,37 +51,78 @@ test("happy path message passing works", async () => {
     sum: (a: number, b: number) => a + b,
     isEven: (n: number) => n % 2 === 0,
     willThrow: () => {
-      throw new Error("This is a test error")
+      throw new Error('This is a test error')
     },
     async asyncResolve() {
-      return await Promise.resolve("Hello")
+      return await Promise.resolve('Hello')
     },
     async asyncReject() {
-      return await Promise.reject(new Error("This is a test async error"))
+      return await Promise.reject(new Error('This is a test async error'))
     },
   }
   const { invoke } = createInstance(model)
 
-  expect(await invoke.sayHello("World")).toEqual("Hello World")
-  expect(await invoke.sayHello("Bime")).toEqual("Hello Bime")
+  expect(await invoke.sayHello('World')).toEqual('Hello World')
+  expect(await invoke.sayHello('Bime')).toEqual('Hello Bime')
   expect(async () => {
-    await invoke.print("it works!")
+    await invoke.print('it works!')
   }).not.toThrow()
   expect(await invoke.sum(1, 2)).toEqual(3)
   expect(await invoke.isEven(2)).toEqual(true)
   expect(await invoke.isEven(3)).toEqual(false)
-  expect(
-    (async () => {
-      return invoke.willThrow()
-    })(),
-  ).rejects.toThrow("This is a test error")
-  expect(await invoke.asyncResolve()).toEqual("Hello")
-  expect(async () => {
-    await invoke.asyncReject()
-  }).toThrow("This is a test async error")
+  await expect(invoke.willThrow()).rejects.toThrow('This is a test error')
+  expect(await invoke.asyncResolve()).toEqual('Hello')
+  await expect(invoke.asyncReject()).rejects.toThrow(
+    'This is a test async error',
+  )
 })
 
-test("non-existent model methods throw errors", async () => {
+test('concurrent invocations resolve to correct values', async () => {
+  const model = {
+    double: (n: number) => n * 2,
+    greet: (name: string) => `Hi ${name}`,
+  }
+  const { invoke } = createInstance(model)
+
+  const [a, b, c, d] = await Promise.all([
+    invoke.double(5),
+    invoke.greet('Alice'),
+    invoke.double(10),
+    invoke.greet('Bob'),
+  ])
+
+  expect(a).toEqual(10)
+  expect(b).toEqual('Hi Alice')
+  expect(c).toEqual(20)
+  expect(d).toEqual('Hi Bob')
+})
+
+test('invalid JSON throws', () => {
+  const model = {
+    sayHello: (name: string) => `Hello ${name}`,
+  }
+  const { listener, sender } = createTransport()
+  bimeListen({ model, listener, sender })
+
+  expect(() => sender('not valid json!!!')).toThrow()
+})
+
+test('valid JSON with wrong shape is silently ignored', async () => {
+  const model = {
+    sayHello: (name: string) => `Hello ${name}`,
+  }
+  const { listener, sender } = createTransport()
+  bimeListen({ model, listener, sender })
+
+  sender(JSON.stringify({ wrong: 'shape' }))
+  sender(JSON.stringify({ id: '1', type: 'unknown' }))
+
+  // Listener still works after bad messages
+  const invoke = bimeInvoke<typeof model>({ listener, sender })
+  expect(await invoke.sayHello('World')).toEqual('Hello World')
+})
+
+test('non-existent model methods throw errors', async () => {
   const model = {}
   const { invoke } = createInstance(model)
 
@@ -94,15 +135,15 @@ test("non-existent model methods throw errors", async () => {
 test("cannot use 'cleanup' as a model method", async () => {
   const model = {
     cleanup: () => {
-      console.log("cleanup")
+      console.log('cleanup')
     },
   }
 
   expect(() =>
     bimeListen({
       model,
-      listener: (handler: (message: string) => void) => () => {},
-      sender: () => {},
+      listener: (_handler: (message: string) => void) => () => undefined,
+      sender: () => undefined,
     }),
   ).toThrow(
     new ReferenceError(
@@ -111,7 +152,7 @@ test("cannot use 'cleanup' as a model method", async () => {
   )
 })
 
-test("listen cleanup works", async () => {
+test('listen cleanup works', async () => {
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
   }
@@ -123,7 +164,7 @@ test("listen cleanup works", async () => {
   expect(cleanupMock).toHaveBeenCalled()
 })
 
-test("invoke cleanup works", async () => {
+test('invoke cleanup works', async () => {
   const model = {
     sayHello: (name: string) => `Hello ${name}`,
   }
@@ -134,8 +175,7 @@ test("invoke cleanup works", async () => {
   invoke.cleanup()
   expect(cleanupMock).toHaveBeenCalled()
 
-  const promise = (async () => {
-    void invoke.sayHello("Mike")
-  })()
-  expect(promise).rejects.toThrow()
+  await expect(invoke.sayHello('Mike')).rejects.toThrow(
+    'The response listener has been cleaned up.',
+  )
 })
