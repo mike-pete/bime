@@ -1,6 +1,6 @@
 {
   "name": "@mike.pete/bime",
-  "version": "2.15.10",
+  "version": "2.15.11",
   "type": "module",
   "main": "./dist/bime.js",
   "module": "./dist/bime.js",
