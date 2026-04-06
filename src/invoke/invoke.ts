@@ -1,61 +1,54 @@
-import superjson from "superjson"
-import { z } from "zod"
-import type {
-  InvocationMessage,
-  MessageListenerWithCleanup,
-  MessageSender,
-  ModelType,
-} from "../types"
-import SentMessageStore from "./SentMessageStore"
+import superjson from 'superjson'
+import { z } from 'zod'
+import type { MessageListenerWithCleanup, MessageSender } from '../types'
+import SentMessageStore from './SentMessageStore'
 
 type MessageResponse<RemoteModel> = {
   [K in keyof RemoteModel]: RemoteModel[K] extends (...args: infer A) => infer R
-    ? (...args: A) => R extends Promise<any> ? R : Promise<R>
+    ? (...args: A) => R extends Promise<unknown> ? R : Promise<R>
     : never
 }
 
-type Invoke<RemoteModel extends ModelType> = MessageResponse<RemoteModel> & {
-  cleanup: () => void
-}
+type Invoke<RemoteModel extends Record<string, (...args: any[]) => any>> =
+  MessageResponse<RemoteModel> & {
+    cleanup: () => void
+  }
 
-// TODO: couple this with types
-export const responseMessageSchema = z.discriminatedUnion("type", [
+const responseMessageSchema = z.discriminatedUnion('type', [
   z.object({
     id: z.string().min(1),
-    type: z.literal("response"),
-    data: z.any(),
+    type: z.literal('response'),
+    data: z.unknown(),
   }),
   z.object({
     id: z.string().min(1),
-    type: z.literal("error"),
+    type: z.literal('error'),
     error: z.instanceof(Error),
-  }),
-  z.object({
-    id: z.string().min(1),
-    type: z.literal("ack"),
   }),
 ])
 
-export default function invoke<Model extends ModelType>({
+export default function invoke<
+  Model extends Record<string, (...args: any[]) => any>,
+>({
   listener,
   sender,
 }: {
   listener: MessageListenerWithCleanup
   sender: MessageSender
-}) {
-  const sentMessagesStore = new SentMessageStore<Model>()
+}): Invoke<Model> {
+  const sentMessagesStore = new SentMessageStore()
 
   let cleanedUp = false
 
-  const invoke = async (
-    procedure: keyof Model,
-    ...args: Parameters<Model[keyof Model]>
-  ) => {
+  const sendInvocation = async (
+    procedure: string,
+    args: unknown[],
+  ): Promise<unknown> => {
     const { id, promise } = sentMessagesStore.add()
 
-    const message: InvocationMessage<Model> = {
+    const message = {
       id,
-      type: "invocation",
+      type: 'invocation' as const,
       procedure,
       args,
     }
@@ -65,52 +58,48 @@ export default function invoke<Model extends ModelType>({
     return await promise
   }
 
-  const messageHandler = (messageString: string) => {
-    const message = superjson.parse(messageString)
+  const messageHandler = (messageString: string): void => {
+    const message: unknown = superjson.parse(messageString)
 
     const { success, data } = responseMessageSchema.safeParse(message)
 
     if (!success) return
 
-    const { id, type } = data
-
-    switch (type) {
-      case "ack":
-        sentMessagesStore.acknowledge(id)
+    switch (data.type) {
+      case 'response':
+        sentMessagesStore.resolve(data.id, data.data)
         break
-      case "response":
-        sentMessagesStore.resolve(
-          id,
-          data.data as ReturnType<Model[keyof Model]>,
-        )
-        break
-      case "error":
-        sentMessagesStore.reject(id, data.error)
+      case 'error':
+        sentMessagesStore.reject(data.id, data.error)
         break
     }
   }
 
   const listenerCleanup = listener(messageHandler)
-  const cleanup = () => {
+  const cleanup = (): void => {
+    if (cleanedUp) {
+      throw new Error('cleanup() has already been called.')
+    }
     cleanedUp = true
     listenerCleanup()
     sentMessagesStore.clear()
   }
 
-  const proxyHandler: ProxyHandler<Invoke<Model>> = {
-    get: (_, procedure: string) => {
-      if (cleanedUp) {
-        throw new Error("The response listener has been cleaned up.")
-      } else if (procedure === "cleanup") {
+  const proxyHandler: ProxyHandler<object> = {
+    get: (_, procedure: string | symbol) => {
+      if (procedure === 'cleanup') {
         return cleanup
-      } else {
-        return async (...args: Parameters<Model[keyof Model]>) => {
-          return await invoke(procedure, ...args)
+      } else if (typeof procedure === 'string') {
+        return async (...args: unknown[]) => {
+          if (cleanedUp) {
+            throw new Error('The response listener has been cleaned up.')
+          }
+          return await sendInvocation(procedure, args)
         }
       }
+      return undefined
     },
   }
 
-  //   eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Proxy<Invoke<Model>>({} as Invoke<Model>, proxyHandler)
+  return new Proxy({}, proxyHandler) as Invoke<Model>
 }

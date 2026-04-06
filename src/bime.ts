@@ -1,6 +1,2 @@
-import invoke from "./invoke/invoke"
-import listen from "./listen/listen"
-
-const bime = { listen, invoke }
-
-export default bime
+export { default as invoke } from './invoke/invoke'
+export { default as listen } from './listen/listen'

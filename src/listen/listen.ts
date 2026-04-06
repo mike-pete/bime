@@ -1,22 +1,21 @@
-import superjson from "superjson"
-import { z } from "zod"
-import {
-  type AckMessage,
-  type ErrorMessage,
-  type MessageListenerWithCleanup,
-  type MessageSender,
-  type ModelType,
-  type ResponseMessage,
-} from "../types"
+import superjson from 'superjson'
+import { z } from 'zod'
+import type { MessageListenerWithCleanup, MessageSender } from '../types'
 
-export const invocationMessageSchema = z.object({
-  id: z.string(),
-  type: z.literal("invocation"),
+const invocationMessageSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('invocation'),
   procedure: z.string().min(1),
-  args: z.array(z.any()),
+  args: z.array(z.unknown()),
 })
 
-export default function listen<Model extends ModelType>({
+type OutgoingMessage =
+  | { id: string; type: 'response'; data: unknown }
+  | { id: string; type: 'error'; error: Error }
+
+export default function listen<
+  Model extends Record<string, (...args: any[]) => any>,
+>({
   model,
   listener,
   sender,
@@ -24,11 +23,13 @@ export default function listen<Model extends ModelType>({
   model: Model
   listener: MessageListenerWithCleanup
   sender: MessageSender
-}) {
+}): { cleanup: () => void } {
   let cleanedUp = false
 
-  if ("cleanup" in model) {
-    throw new Error('"cleanup" is a reserved name and cannot be used on the model.')
+  if ('cleanup' in model) {
+    throw new ReferenceError(
+      '"cleanup" is a reserved name and cannot be used on the model.',
+    )
   }
 
   const handler = callHandler(model, sender)
@@ -37,7 +38,7 @@ export default function listen<Model extends ModelType>({
   return {
     cleanup: () => {
       if (cleanedUp) {
-        throw new Error("The listener has been cleaned up.")
+        throw new Error('The listener has been cleaned up.')
       }
       cleanedUp = true
       cleanup()
@@ -45,52 +46,58 @@ export default function listen<Model extends ModelType>({
   }
 }
 
+function toError(value: unknown): Error {
+  if (value instanceof Error) return value
+  if (typeof value === 'string') return new Error(value)
+  try {
+    return new Error(JSON.stringify(value))
+  } catch {
+    return new Error(`Non-serializable throw: ${typeof value}`)
+  }
+}
+
 const callHandler =
-  <Model extends ModelType>(model: Model, sender: MessageSender) =>
-  (messageString: string) => {
-    const message = superjson.parse(messageString)
+  (model: Record<string, (...args: any[]) => any>, sender: MessageSender) =>
+  (messageString: string): void => {
+    const message: unknown = superjson.parse(messageString)
 
     const { success, data } = invocationMessageSchema.safeParse(message)
 
     if (!success) return
     const { id, procedure, args } = data
 
-    const sendResponse = <Model extends ModelType>(
-      message: AckMessage | ResponseMessage<Model> | ErrorMessage,
-    ) => {
+    const sendResponse = (message: OutgoingMessage): void => {
       sender(superjson.stringify(message))
     }
 
-    sendResponse({ id, type: "ack" })
-
-    if (typeof model[procedure] !== "function") {
+    const fn = model[procedure]
+    if (typeof fn !== 'function') {
       const error = new ReferenceError(
         `"${String(procedure)}" is not a procedure on the model`,
       )
-      sendResponse({ id, type: "error", error })
+      sendResponse({ id, type: 'error', error })
       return
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const invocationResult = model[procedure](...args)
+      const invocationResult: unknown = fn(...args)
 
       if (invocationResult instanceof Promise) {
         invocationResult
-          .then((data) => {
-            sendResponse({ id, type: "response", data })
+          .then((data: unknown) => {
+            sendResponse({ id, type: 'response', data })
           })
-          .catch((error) => {
-            sendResponse({ id, type: "error", error })
+          .catch((error: unknown) => {
+            sendResponse({ id, type: 'error', error: toError(error) })
           })
       } else {
         sendResponse({
           id,
-          type: "response",
+          type: 'response',
           data: invocationResult,
         })
       }
     } catch (error) {
-      sendResponse({ id, type: "error", error: error as Error })
+      sendResponse({ id, type: 'error', error: toError(error) })
     }
   }

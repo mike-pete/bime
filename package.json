@@ -2,14 +2,14 @@
   "name": "@mike.pete/bime",
   "version": "2.0.1",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/bime.js",
+  "module": "./dist/bime.js",
+  "types": "./dist/bime.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/bime.d.ts",
+      "import": "./dist/bime.js",
+      "require": "./dist/bime.cjs"
     }
   },
   "files": [
@@ -21,10 +21,11 @@
   "sideEffects": false,
   "scripts": {
     "dev": "bun build ./src/bime.ts --watch",
-    "build": "bun build ./src/bime.ts --outfile ./dist/index.js && bun build ./src/bime.ts --outfile ./dist/index.cjs --format cjs && tsc --emitDeclarationOnly",
+    "build": "bun build ./src/bime.ts --outdir ./dist --entry-naming [name].js --sourcemap=external && bun build ./src/bime.ts --outdir ./dist --entry-naming [name].cjs --format cjs --sourcemap=external && tsc --emitDeclarationOnly --project tsconfig.build.json",
     "prepublishOnly": "bun run build",
-    "prettier": "prettier . --write",
-    "lint": "eslint 'src/**'",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "repository": {
@@ -39,21 +40,13 @@
   "homepage": "https://github.com/mike-pete/bime#readme",
   "description": "",
   "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
     "@types/bun": "^1.2.10",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-standard-with-typescript": "^43.0.1",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-n": "^16.6.2",
-    "eslint-plugin-promise": "^6.1.1",
-    "prettier": "3.2.4",
-    "prettier-plugin-organize-imports": "^3.2.4",
     "tslib": "^2.6.2",
-    "typescript": "^5.3.3",
-    "zod": "^3.24.3"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "superjson": "^2.2.2"
+    "superjson": "^2.2.2",
+    "zod": "^3.24.3"
   }
 }
