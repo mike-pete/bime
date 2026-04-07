@@ -1,6 +1,6 @@
 import superjson from 'superjson'
 import { z } from 'zod'
-import type { MessageListenerWithCleanup, MessageSender } from '../types'
+import type { Transport } from '../types'
 import SentMessageStore from './SentMessageStore'
 
 type MessageResponse<RemoteModel> = {
@@ -29,13 +29,8 @@ const responseMessageSchema = z.discriminatedUnion('type', [
 
 export default function invoke<
   Model extends Record<string, (...args: any[]) => any>,
->({
-  listener,
-  sender,
-}: {
-  listener: MessageListenerWithCleanup
-  sender: MessageSender
-}): Invoke<Model> {
+>(transport: Transport): Invoke<Model> {
+  const { listener, sender, cleanup: transportCleanup } = transport
   const sentMessagesStore = new SentMessageStore()
 
   let cleanedUp = false
@@ -83,6 +78,7 @@ export default function invoke<
     cleanedUp = true
     listenerCleanup()
     sentMessagesStore.clear()
+    transportCleanup?.()
   }
 
   const proxyHandler: ProxyHandler<object> = {
