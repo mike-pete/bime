@@ -10,6 +10,26 @@
       "types": "./dist/bime.d.ts",
       "import": "./dist/bime.js",
       "require": "./dist/bime.cjs"
+    },
+    "./connection": {
+      "types": "./dist/connection.d.ts",
+      "import": "./dist/connection.js",
+      "require": "./dist/connection.cjs"
+    },
+    "./iframe": {
+      "types": "./dist/iframe.d.ts",
+      "import": "./dist/iframe.js",
+      "require": "./dist/iframe.cjs"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js",
+      "require": "./dist/worker.cjs"
+    },
+    "./broadcast-channel": {
+      "types": "./dist/broadcast-channel.d.ts",
+      "import": "./dist/broadcast-channel.js",
+      "require": "./dist/broadcast-channel.cjs"
     }
   },
   "files": [
@@ -21,7 +41,7 @@
   "sideEffects": false,
   "scripts": {
     "dev": "bun build ./src/bime.ts --watch",
-    "build": "bun build ./src/bime.ts --outdir ./dist --entry-naming [name].js --sourcemap=external && bun build ./src/bime.ts --outdir ./dist --entry-naming [name].cjs --format cjs --sourcemap=external && tsc --emitDeclarationOnly --project tsconfig.build.json",
+    "build": "bun build ./src/bime.ts ./src/connection.ts ./src/iframe.ts ./src/worker.ts ./src/broadcast-channel.ts --outdir ./dist --entry-naming [name].js --sourcemap=external && bun build ./src/bime.ts ./src/connection.ts ./src/iframe.ts ./src/worker.ts ./src/broadcast-channel.ts --outdir ./dist --entry-naming [name].cjs --format cjs --sourcemap=external && tsc --emitDeclarationOnly --project tsconfig.build.json",
     "prepublishOnly": "bun run build",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",

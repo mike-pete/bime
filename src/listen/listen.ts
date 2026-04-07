@@ -1,6 +1,6 @@
 import superjson from 'superjson'
 import { z } from 'zod'
-import type { MessageListenerWithCleanup, MessageSender } from '../types'
+import type { MessageSender, Transport } from '../types'
 
 const invocationMessageSchema = z.object({
   id: z.string().min(1),
@@ -17,13 +17,11 @@ export default function listen<
   Model extends Record<string, (...args: any[]) => any>,
 >({
   model,
-  listener,
-  sender,
+  ...transport
 }: {
   model: Model
-  listener: MessageListenerWithCleanup
-  sender: MessageSender
-}): { cleanup: () => void } {
+} & Transport): { cleanup: () => void } {
+  const { listener, sender, cleanup: transportCleanup } = transport
   let cleanedUp = false
 
   if ('cleanup' in model) {
@@ -33,7 +31,7 @@ export default function listen<
   }
 
   const handler = callHandler(model, sender)
-  const cleanup = listener(handler)
+  const listenerCleanup = listener(handler)
 
   return {
     cleanup: () => {
@@ -41,7 +39,8 @@ export default function listen<
         throw new Error('The listener has been cleaned up.')
       }
       cleanedUp = true
-      cleanup()
+      listenerCleanup()
+      transportCleanup?.()
     },
   }
 }
